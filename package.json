@@ -1,0 +1,13 @@
+{
+  "name": "profit-miniapp",
+  "version": "1.0.0",
+  "description": "Build system for Telegram Mini App",
+  "main": "build-miniapp.js",
+  "scripts": {
+    "build-miniapp": "node build-miniapp.js",
+    "test": "echo \"No tests specified\""
+  },
+  "keywords": [],
+  "author": "Rustam Romanov",
+  "license": "ISC"
+}
