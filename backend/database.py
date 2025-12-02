@@ -1,14 +1,6 @@
 import sqlite3
 import time
 from pathlib import Path
-import logging
-
-# Настройка логирования для отслеживания повторных попыток
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-# Константы для настройки повторных попыток
-MAX_RETRIES = 5
-RETRY_DELAY_SECONDS = 0.5
 
 # Базовая директория - это папка, где находится database.py (т.е., backend/)
 BASE_DIR = Path(__file__).resolve().parent
@@ -123,13 +115,13 @@ def init_db():
 
 
 def setup_initial_data():
-    """Добавление тестовых данных, если БД пуста. Используются только 'subscribe', 'comment', 'view'."""
+    """Добавление тестовых данных, если БД пуста."""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     cursor.execute("SELECT COUNT(*) FROM tasks")
     if cursor.fetchone()[0] == 0:
-        # 1. Подписка
+        # Подписка
         cursor.execute("""
             INSERT INTO tasks (customer_id, title, description, task_type, price_simulated, slots_remaining, target_link)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -143,7 +135,7 @@ def setup_initial_data():
             "https://t.me/telegram_channel_vip"
         ))
 
-        # 2. Комментарий
+        # Комментарий
         cursor.execute("""
             INSERT INTO tasks (customer_id, title, description, task_type, price_simulated, slots_remaining, target_link)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -157,14 +149,14 @@ def setup_initial_data():
             "https://t.me/telegram_post_1"
         ))
 
-        # 3. Просмотр публикации
+        # Просмотр
         cursor.execute("""
             INSERT INTO tasks (customer_id, title, description, task_type, price_simulated, slots_remaining, target_link)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (
             1001,
-            "Просмотр публикации (TEST)", # Изменение названия для ясности
-            "Просмотрите последнюю публикацию в канале. Требуется только просмотр.", # Изменение описания для ясности
+            "Просмотр нового поста (TEST)",
+            "Просмотрите последний пост в канале. Требуется только просмотр.",
             "view",
             0.10,
             500,
@@ -183,64 +175,29 @@ def setup_initial_data():
 
 
 def db_query(query, params=(), fetchone=False, commit=True, fetchall=False):
-    """
-    Универсальная функция для выполнения запросов к БД с логикой повторных попыток.
-    
-    Исправляет ошибку 'database is locked', пытаясь выполнить запрос до MAX_RETRIES раз.
-    """
-    
-    # 1. Основной цикл повторных попыток
-    for attempt in range(1, MAX_RETRIES + 1):
-        conn = None
-        try:
-            # 2. Подключаемся к базе данных
-            conn = sqlite3.connect(DB_PATH, timeout=10) # Увеличим таймаут, хотя основная логика в retry
-            cursor = conn.cursor()
-            
-            # 3. Выполняем запрос
-            cursor.execute(query, params)
-            
-            # 4. Если запрос успешен, обрабатываем результат и завершаем цикл
-            upper = query.strip().upper()
-            if upper.startswith("SELECT"):
-                if fetchone:
-                    result = cursor.fetchone()
-                elif fetchall:
-                    result = cursor.fetchall()
-                else:
-                    result = cursor.fetchall()
-            else:
-                if commit:
-                    conn.commit()
-                result = cursor.lastrowid if upper.startswith("INSERT") else None
-            
-            # Успешное выполнение, выходим из цикла и возвращаем результат
-            return result
+    """Универсальная функция для выполнения запросов к БД."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
 
-        except sqlite3.OperationalError as e:
-            # 5. Обрабатываем ошибку блокировки
-            if 'database is locked' in str(e) or 'cannot commit' in str(e):
-                logging.warning(f"SQLite Error: database is locked. Попытка {attempt}/{MAX_RETRIES}. Запрос: {query[:50]}...")
-                
-                if attempt == MAX_RETRIES:
-                    logging.error(f"Не удалось выполнить запрос после {MAX_RETRIES} попыток. Выброс исключения.")
-                    raise e
-                
-                # Ждем, увеличивая задержку
-                time.sleep(RETRY_DELAY_SECONDS * attempt)
-            else:
-                # Если это другая OperationalError, выбрасываем сразу
-                logging.error(f"SQLite Error (Другая OperationalError): {e}\nQuery: {query}\nParams: {params}")
-                raise e
-        
-        except Exception as e:
-            # Обработка других непредвиденных ошибок
-            logging.error(f"Непредвиденная ошибка при выполнении запроса: {e}\nQuery: {query}\nParams: {params}")
-            raise e
-        
-        finally:
-            # 6. Всегда закрываем соединение в конце каждой попытки
-            if conn:
-                conn.close()
-                
-    return None # Должно быть недостижимо
+    try:
+        cursor.execute(query, params)
+    except sqlite3.OperationalError as e:
+        print(f"SQLite Error: {e}\nQuery: {query}\nParams: {params}")
+        conn.close()
+        raise e
+
+    upper = query.strip().upper()
+    if upper.startswith("SELECT"):
+        if fetchone:
+            result = cursor.fetchone()
+        elif fetchall:
+            result = cursor.fetchall()
+        else:
+            result = cursor.fetchall()
+    else:
+        if commit:
+            conn.commit()
+        result = cursor.lastrowid if upper.startswith("INSERT") else None
+
+    conn.close()
+    return result
