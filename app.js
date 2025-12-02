@@ -377,6 +377,46 @@ const renderTaskItem = (task) => {
         if (balanceValueDisplay) balanceValueDisplay.innerHTML = `${currentUserData.balance.toFixed(2)} ${CURRENCY_STAR}`;
     };
 
+    // Обновление вкладки "Баланс" в нижнем меню:
+// если баланс > 0 — показываем сумму, иначе иконку.
+const updateBottomBalanceTab = () => {
+    const iconEl = document.getElementById('balance-tab-icon');
+    const amountEl = document.getElementById('balance-tab-amount');
+    const headerBalanceEl = document.getElementById('balance-value-display'); // баланс в основном экране
+
+    if (!iconEl || !amountEl) return;
+
+    let balance = 0;
+
+    // 1) Пытаемся взять из уже отрисованного текста наверху
+    if (headerBalanceEl && headerBalanceEl.textContent.trim() !== '') {
+        const text = headerBalanceEl.textContent.trim().replace(',', '.');
+        const parsed = parseFloat(text);
+        if (!isNaN(parsed)) {
+            balance = parsed;
+        }
+    }
+
+    // 2) Если есть объект currentUserData с балансом — используем его
+    if (
+        typeof currentUserData !== 'undefined' &&
+        currentUserData &&
+        typeof currentUserData.balance === 'number'
+    ) {
+        balance = currentUserData.balance;
+    }
+
+    if (balance > 0) {
+        iconEl.style.display = 'none';
+        amountEl.style.display = 'inline';
+        amountEl.textContent = balance.toFixed(2);
+    } else {
+        iconEl.style.display = 'inline-block';
+        amountEl.style.display = 'none';
+    }
+};
+
+
     // Рендеринг профиля (почти без изменений)
     const renderProfile = () => {
         const container = getEl('profile-menu-container');

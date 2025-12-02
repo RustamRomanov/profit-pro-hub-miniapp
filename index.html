@@ -158,28 +158,37 @@
 
         </main>
 
-        <!-- Нижний навигационный бар -->
+              <!-- Нижний навигационный бар -->
         <footer class="bottom-nav-bar">
-    <div class="tab-item active" data-screen="worker-tasks-container">
-        <div class="tab-info-block">
-            <i class="fas fa-list-check tab-icon"></i>
-        </div>
-        <span class="tab-info-text">Задания</span>
-    </div>
-    <div class="tab-item" data-screen="balance-menu-container">
-        <div class="tab-info-block">
-            <i class="fas fa-wallet tab-icon"></i>
-            <span id="balance-value-display" class="tab-number">50.75</span>
-        </div>
-        <span class="tab-info-text">Баланс</span>
-    </div>
-    <div class="tab-item" data-screen="profile-menu-container">
-        <div class="tab-info-block">
-            <i class="fas fa-user tab-icon"></i>
-        </div>
-        <span class="tab-info-text">Профиль</span>
-    </div>
-</footer>
+            <!-- Вкладка "Задания" — без числа -->
+            <div class="tab-item active" data-screen="worker-tasks-container">
+                <div class="tab-info-block">
+                    <i class="fas fa-list-check tab-icon"></i>
+                </div>
+                <span class="tab-info-text">Задания</span>
+            </div>
+
+            <!-- Вкладка "Баланс": либо иконка, либо сумма -->
+            <div class="tab-item" data-screen="balance-menu-container">
+                <div class="tab-info-block">
+                    <!-- Иконка показывается, когда баланса нет -->
+                    <i class="fas fa-wallet tab-icon" id="balance-tab-icon"></i>
+                    <!-- Сумма показывается, когда баланс > 0 -->
+                    <span id="balance-value-display" class="tab-number" style="display: none;">0.00</span>
+                </div>
+                <span class="tab-info-text">Баланс</span>
+            </div>
+
+            <!-- Вкладка "Профиль" без изменений -->
+            <div class="tab-item" data-screen="profile-menu-container">
+                <div class="tab-info-block">
+                    <i class="fas fa-user tab-icon"></i>
+                    <!-- Здесь нет числа, оставим пустым или можно добавить рейтинг -->
+                </div>
+                <span class="tab-info-text">Профиль</span>
+            </div>
+        </footer>
+
 
     </div>
     
