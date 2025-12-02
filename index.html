@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8" />
     <title>Profit Pro Hub</title>
-    <!-- user-scalable=no, maximum-scale=1.0 - предотвращают масштабирование экрана (статичное изображение) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0" />
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -15,114 +14,48 @@
 <body id="app-body">
     <div id="app-root" class="app-root">
 
-        <!-- Глобальный заголовок, который будет меняться в зависимости от экрана -->
         <header id="global-header-bar" class="global-header-bar">
-            <!-- Содержимое заголовка будет генерироваться JS в updateHeader() -->
-        </header>
+            </header>
 
         <main class="main-content">
-            <!-- 1. Экран исполнителя (Задания) -->
+
             <div id="worker-tasks-container" class="screen-container active">
-                <div id="worker-tasks-list">
-                    <!-- Задания будут рендериться здесь -->
                 </div>
-            </div>
 
-            <!-- 2. Экран создателя (Мои задания / Создать задание) -->
-            <div id="creator-menu-container" class="screen-container">
-                <div id="creator-tasks-list">
-                    <!-- Задания создателя (только на модерации) будут здесь -->
+            <div id="balance-menu-container" class="screen-container" style="display: none;">
                 </div>
-            </div>
 
-            <!-- 3. Экран создания задания (Форма) -->
-            <div id="creator-task-form-container" class="screen-container scrollable-content" style="padding-top: 0;">
-                <h2 class="section-title">Создание нового задания</h2>
-                <div id="creator-task-form">
-                    <!-- Форма будет рендериться JS -->
+            <div id="profile-menu-container" class="screen-container" style="display: none;">
                 </div>
-            </div>
-            
-            <!-- 4. Экран баланса -->
-            <div id="balance-menu-container" class="screen-container">
-                <div id="balance-info">
-                    <!-- Информация о балансе будет рендериться здесь -->
-                </div>
-            </div>
 
-            <!-- 5. Экран профиля -->
-            <div id="profile-menu-container" class="screen-container">
-                <div id="profile-info">
-                    <!-- Информация о профиле будет рендериться здесь -->
+            <div id="task-details-container" class="screen-container" style="display: none;">
                 </div>
-                <div id="profile-fill-form">
-                    <!-- Форма заполнения профиля будет рендериться здесь -->
+
+            <div id="create-task-container" class="screen-container" style="display: none;">
                 </div>
-            </div>
-            
+
         </main>
 
-        <!-- Нижние вкладки -->
-        <nav id="bottom-tabs" class="bottom-tabs">
-            <!-- Вкладка 1: Задания -->
-            <button class="tab-button active" data-target="worker-tasks-container">
-                <i class="fas fa-list-check icon-tabs"></i>
-                <span class="tab-label">Задания</span>
-            </button>
-            <!-- Вкладка 2: Создатель (Мои задания) -->
-            <button class="tab-button" data-target="creator-menu-container">
-                <i class="fas fa-layer-group icon-tabs"></i>
-                <span class="tab-label">Мои задания</span>
-            </button>
-            <!-- Вкладка 3: Баланс -->
-            <button class="tab-button" data-target="balance-menu-container">
-                <i class="fas fa-wallet icon-tabs"></i>
-                <span class="tab-label">Баланс</span>
-            </button>
-            <!-- Вкладка 4: Профиль -->
-            <button class="tab-button" data-target="profile-menu-container">
-                <i class="fas fa-user-gear icon-tabs"></i>
-                <span class="tab-label">Профиль</span>
-            </button>
-        </nav>
+        <footer id="bottom-nav-bar" class="tab-bar">
+            </footer>
 
     </div>
 
-    <!-- -------------------------------------------------------------------------------- -->
-    <!-- МОДАЛЬНЫЕ ОКНА (Оставляем как было, кроме кнопок/текста если нужно) -->
-    <!-- -------------------------------------------------------------------------------- -->
-
-    <!-- Модальное окно пользовательского соглашения -->
     <div id="terms-modal" class="modal-backdrop" style="display:none;">
-        <div class="modal-content scrollable-content">
+        <div class="modal-content">
             <h3>Пользовательское соглашение</h3>
-            <!-- ... (текст соглашения) ... -->
-            <div class="terms-text">
-                <p>
-                    <strong>1. Общие положения.</strong>
-                    1.1. Настоящее Соглашение определяет условия использования сервиса Profit Pro Hub.
-                    1.2. Используя Сервис, Пользователь соглашается с настоящими условиями.
-                </p>
-                <p>
-                    <strong>2. Права и обязанности Пользователя.</strong>
-                    2.1. Пользователь обязуется предоставлять достоверные данные о себе.
-                    2.2. Запрещается накрутка, использование ботов и иные мошеннические действия. Нарушение ведет к блокировке.
-                </p>
-                <p>
-                    <strong>3. Финансовые условия.</strong>
-                    3.1. Вывод средств осуществляется на внешние кошельки с учетом комиссии.
-                    3.2. Средства за задания могут быть зарезервированы (эскроу) до подтверждения выполнения.
-                </p>
-                <p>
-                    <strong>4. Ответственность.</strong>
-                    4.1. Сервис не несет ответственности за сбои в работе Telegram или внешних платежных систем.
-                </p>
-            </div>
-            <div class="checkbox-container">
-                <input type="checkbox" id="accept-terms-checkbox" disabled>
-                <label for="accept-terms-checkbox">Я ознакомлен(а) и согласен(сна) с условиями</label>
-            </div>
-            <button id="modal-accept-terms" class="btn-primary" disabled>
+            <p class="muted-text">
+                Здесь будет полный текст соглашения. Основные пункты:
+            </p>
+            <ul>
+                <li>Запрет на использование ботов и накруток.</li>
+                <li>Обязательное нахождение в канале 7 дней.</li>
+                <li>Немедленная блокировка аккаунта при нарушениях.</li>
+            </ul>
+            <p>
+                Соглашение необходимо принять, чтобы начать работу.
+            </p>
+            <button id="modal-accept-terms" class="btn-primary">
                 Принять
             </button>
             <button id="modal-close-terms" class="btn-secondary">
@@ -131,7 +64,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно Рейтинга -->
     <div id="rating-modal" class="modal-backdrop" style="display:none;">
         <div class="modal-content">
             <h3>Что такое рейтинг?</h3>
@@ -149,7 +81,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно админ-бота -->
     <div id="admin-bot-modal" class="modal-backdrop" style="display:none;">
         <div class="modal-content">
             <h3>Админ-бот для проверки</h3>
