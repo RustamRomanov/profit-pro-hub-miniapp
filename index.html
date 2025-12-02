@@ -3,81 +3,60 @@
 <head>
     <meta charset="UTF-8" />
     <title>Profit Pro Hub</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0" />
 
-    <!-- Telegram WebApp JS (Обязательно для работы в Telegram) -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <!-- Иконки (простая библиотека для мобильного вида) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJc5fR5Wc4W3uI5h/4Q/2h+L72V6W7tT6J5l1S4uU5D5d5a5G5u5" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJc5fR5Wc4W3uI5h/4Q/2h+L72V6W7tT6J5l1S4uU5h/4Q/2h+L72V6W7tT6J5l1S4uU5D5d5a5G5u5" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <!-- Наши стили -->
     <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body id="app-body">
     <div id="app-root" class="app-root">
 
-        <!-- Глобальный хедер (Верхняя Панель) -->
         <header id="global-header-bar" class="global-header-bar">
-            <!-- Заполняется из app.js → renderGlobalHeader() -->
-        </header>
+            </header>
 
-        <!-- Основной контент (Скроллируемая область) -->
         <main class="main-content">
 
-            <!-- 1. Список заданий (Исполнитель) -->
-            <section id="worker-tasks-container" class="screen-container">
-                <!-- Рендерится в renderWorkerTasks() -->
-            </section>
+            <div id="worker-tasks-container" class="screen-container active">
+                </div>
 
-            <!-- 2. Детали задания -->
-            <section id="task-details-container" class="screen-container" style="display:none;">
-                <!-- Рендерится в renderTaskDetails() -->
-            </section>
+            <div id="balance-menu-container" class="screen-container" style="display: none;">
+                </div>
 
-            <!-- 3. Создание задания (Заказчик) -->
-            <section id="create-task-container" class="screen-container" style="display:none;">
-                <!-- Рендерится в renderCreateTask() -->
-            </section>
+            <div id="profile-menu-container" class="screen-container" style="display: none;">
+                </div>
 
-            <!-- 4. Баланс и операции -->
-            <section id="balance-menu-container" class="screen-container" style="display:none;">
-                <!-- Рендерится в renderBalance() -->
-            </section>
+            <div id="task-details-container" class="screen-container" style="display: none;">
+                </div>
 
-            <!-- 5. Профиль -->
-            <section id="profile-menu-container" class="screen-container" style="display:none;">
-                <!-- Рендерится в renderProfile() -->
-            </section>
-            
+            <div id="create-task-container" class="screen-container" style="display: none;">
+                </div>
+
         </main>
-        
-        <!-- Нижняя навигационная панель -->
-        <nav id="bottom-nav-bar">
-            <!-- Рендерится в renderBottomNav() -->
-        </nav>
+
+        <footer id="bottom-nav-bar" class="tab-bar">
+            </footer>
 
     </div>
 
-    <!-- === МОДАЛЬНЫЕ ОКНА === -->
-
-    <!-- Модальное окно для соглашения (пользовательские условия) -->
     <div id="terms-modal" class="modal-backdrop" style="display:none;">
         <div class="modal-content">
             <h3>Пользовательское соглашение</h3>
-            <p>
-                <strong>Принимая соглашение, вы подтверждаете:</strong>
+            <p class="muted-text">
+                Здесь будет полный текст соглашения. Основные пункты:
             </p>
             <ul>
-                <li>Вам исполнилось 18 лет.</li>
-                <li>Вы обязуетесь не использовать нецензурную лексику и не размещать запрещенный контент (мошенничество, порнография, агрессия).</li>
-                <li>Вы согласны с правилами сервиса (см. подробнее в канале-боте).</li>
+                <li>Запрет на использование ботов и накруток.</li>
+                <li>Обязательное нахождение в канале 7 дней.</li>
+                <li>Немедленная блокировка аккаунта при нарушениях.</li>
             </ul>
-            <p class="muted-text">
-                Отсутствие согласия ограничит доступ к заданиям.
+            <p>
+                Соглашение необходимо принять, чтобы начать работу.
             </p>
             <button id="modal-accept-terms" class="btn-primary">
-                Принимаю условия
+                Принять
             </button>
             <button id="modal-close-terms" class="btn-secondary">
                 Закрыть
@@ -85,12 +64,11 @@
         </div>
     </div>
 
-    <!-- Модальное окно для правил рейтинга -->
-    <div id="rating-rules-modal" class="modal-backdrop" style="display:none;">
+    <div id="rating-modal" class="modal-backdrop" style="display:none;">
         <div class="modal-content">
-            <h3>Что такое Рейтинг?</h3>
-            <p>
-                Рейтинг — это показатель вашей надежности и качества выполнения заданий как исполнителя.
+            <h3>Что такое рейтинг?</h3>
+            <p class="muted-text">
+                Рейтинг — это ключевой показатель надежности исполнителя.
             </p>
             <ul>
                 <li>За успешно выполненные задания рейтинг растёт.</li>
@@ -103,7 +81,6 @@
         </div>
     </div>
 
-    <!-- Инструкция по админ-боту -->
     <div id="admin-bot-modal" class="modal-backdrop" style="display:none;">
         <div class="modal-content">
             <h3>Админ-бот для проверки</h3>
@@ -126,7 +103,6 @@
         </div>
     </div>
 
-    <!-- Наш основной JS -->
     <script src="app.js"></script>
 </body>
 </html>

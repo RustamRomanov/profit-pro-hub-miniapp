@@ -6,7 +6,7 @@
     --text-color: #f5f5f7; /* Основной светлый текст */
     --hint-color: #a0a4aa; /* Вспомогательный серый текст */
     --link-color: #64b5f6; /* Яркий акцент для ссылок */
-    
+
     --card-bg: #181b20; /* Фон для карточек */
     --secondary-bg-color: #21252b; /* Фон для кнопок, модалок */
     --border-subtle: #262a31; /* Тонкая граница */
@@ -27,6 +27,9 @@
     --view-bg: #25211b; /* Темно-желтый/золотистый */
     --view-border: #4b3f28;
     --view-text: #ffecb3;
+    
+    /* Дополнительные цвета для активной навигации */
+    --active-nav-bg: #2a3138; 
 
     /* Шрифты и размеры */
     --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
@@ -48,6 +51,8 @@ body {
     flex-direction: column;
     height: 100vh;
     overflow: hidden; /* Основной контейнер не скроллится */
+    /* Запрет скролла/масштабирования - уже в index.html, но добавим для безопасности */
+    touch-action: pan-y;
 }
 
 a {
@@ -103,12 +108,16 @@ a {
     flex-grow: 1;
     overflow-y: auto; /* Контент внутри скроллится */
     -webkit-overflow-scrolling: touch;
-    padding: 0 0 10px; /* Отступы по бокам будут внутри секций */
+    padding: 0; 
 }
 
 .screen-container {
-    padding: 16px;
     display: none; /* Управляется JS */
+}
+
+/* Общий паддинг для контента экрана */
+.screen-content-padding {
+    padding: 16px;
 }
 
 .section-title {
@@ -125,6 +134,14 @@ a {
     margin: 15px 0 10px 0;
 }
 
+/* Новый заголовок для списка заданий */
+.section-title-tasks {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 20px 0 10px 0;
+}
+
 /* === 3. НИЖНЯЯ НАВИГАЦИЯ (Bottom Bar) === */
 #bottom-nav-bar {
     position: fixed;
@@ -137,7 +154,7 @@ a {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding-bottom: env(safe-area-inset-bottom, 5px); /* Учет области iPhone X/11/12/13 */
+    padding-bottom: env(safe-area-inset-bottom, 5px); 
     z-index: 20;
 }
 
@@ -152,10 +169,13 @@ a {
     transition: color 0.2s, background-color 0.2s;
     height: 100%;
     padding-top: 5px;
+    /* Улучшение: фон для активной вкладки */
+    background-color: var(--secondary-bg-color);
 }
 
 .nav-item.active {
     color: var(--accent-color);
+    background-color: var(--active-nav-bg); 
 }
 
 .nav-item i {
@@ -255,6 +275,7 @@ a {
 }
 
 .input-group input[type="text"],
+.input-group input[type="url"],
 .input-group input[type="number"],
 .input-group textarea,
 .input-group select {
@@ -283,9 +304,20 @@ a {
     flex: 1;
 }
 
-.small-input {
+/* Стили для скролла цифр возраста (имитация) */
+.small-select {
+    width: 100%;
     text-align: center;
+    appearance: none; /* Убираем нативный стиль select */
+    -webkit-appearance: none;
+    background-position: right 8px center; /* Убираем/сдвигаем стрелку */
+    background-size: 8px;
+    padding-right: 25px; 
 }
+.small-select option {
+    text-align: left;
+}
+
 
 .form-divider {
     border: none;
@@ -331,7 +363,6 @@ a {
 /* === 5. РЕНДЕРИНГ ЗАДАНИЙ (task-card) === */
 .create-task-block {
     margin-bottom: 15px;
-    padding: 0 16px;
 }
 
 .create-task-button {
@@ -343,9 +374,8 @@ a {
 .task-market-info {
     font-size: 12px;
     color: var(--hint-color);
-    text-align: center;
+    text-align: left; /* Изменено на выравнивание по левому краю */
     margin-bottom: 20px;
-    padding: 0 16px;
 }
 
 .tasks-count {
@@ -354,7 +384,8 @@ a {
 }
 
 .tasks-list {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 10px;
 }
 
@@ -432,6 +463,22 @@ a {
     color: var(--view-text);
 }
 
+/* Карточка на модерации */
+.moderation-card {
+    border-left-color: var(--link-color);
+    background-color: var(--secondary-bg-color);
+}
+.moderation-badge {
+    background-color: var(--border-subtle);
+    color: var(--link-color) !important;
+}
+.status-badge {
+    font-size: 12px;
+    color: var(--hint-color);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
 
 .task-meta {
     margin-top: 5px;
@@ -497,6 +544,14 @@ a {
     margin: 0;
     font-weight: 700;
 }
+/* Центрированный заголовок для деталей (вместо title) */
+.task-details-title-centered {
+    font-size: 18px;
+    margin: 0;
+    font-weight: 700;
+    flex-grow: 1;
+    text-align: center;
+}
 
 .reward-row {
     display: flex;
@@ -554,21 +609,27 @@ a {
     padding: 8px 0;
 }
 
-.main-balance {
+.total-balance, .pending-balance {
     border-bottom: 1px dashed var(--border-subtle);
     margin-bottom: 8px;
 }
 
-.main-balance .balance-value {
+.total-balance .balance-value {
     font-size: 24px;
     font-weight: 700;
-    color: var(--success-color);
+    color: var(--text-color); /* Общий баланс - нейтральный цвет */
 }
 
 .pending-balance .balance-value {
     font-size: 18px;
     font-weight: 600;
-    color: var(--accent-color);
+    color: var(--accent-color); /* Эскроу - акцентный цвет */
+}
+
+.withdrawable-balance .balance-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--success-color); /* Готово к выводу - зеленый цвет */
 }
 
 .balance-label {
@@ -706,7 +767,7 @@ a {
 }
 
 .profile-details-card {
-    padding: 0 16px; /* Убираем вертикальный паддинг, он будет в строках */
+    padding: 0 16px; 
 }
 
 .profile-details-card .detail-row {
@@ -730,7 +791,6 @@ a {
 
 .profile-actions {
     margin-top: 25px;
-    padding: 0 16px;
 }
 
 /* === 8. МОДАЛЬНЫЕ ОКНА === */
