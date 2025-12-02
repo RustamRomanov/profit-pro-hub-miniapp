@@ -6,7 +6,7 @@ import random
 import time
 
 # --- ИСПРАВЛЕНИЕ: Используем прямые импорты, так как все файлы в одной папке (backend/) ---
-from database import db_query
+from .database import db_query
 from config import BOT_TOKEN, ADMIN_BOT_TOKEN 
 # ------------------------------------------------------------------------------------------
 
