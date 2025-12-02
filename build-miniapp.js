@@ -4,7 +4,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const SOURCE = path.join(__dirname, 'frontend-dev');
+// Предполагается, что папка frontend-dev находится в той же директории, что и этот скрипт
+const SOURCE = path.join(__dirname, 'frontend-dev'); 
 const TARGET = path.join(__dirname, 'miniapp-build');
 
 const FILES = ['index.html', 'app.js', 'styles.css'];
@@ -12,6 +13,11 @@ const FILES = ['index.html', 'app.js', 'styles.css'];
 console.log('==============================');
 console.log('🚀 Building Telegram Mini App...');
 console.log('==============================\n');
+
+// Создание целевой папки, если ее нет
+if (!fs.existsSync(TARGET)) {
+    fs.mkdirSync(TARGET);
+}
 
 FILES.forEach(file => {
     const from = path.join(SOURCE, file);
