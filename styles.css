@@ -10,10 +10,12 @@
     --card-bg: #181b20; /* Фон для карточек */
     --secondary-bg-color: #21252b; /* Фон для кнопок, модалок */
     --border-subtle: #262a31; /* Тонкая граница */
+    --border-creator-task: #ffb74d; /* Оранжевый/Янтарный для заданий создателя */
 
     --accent-color: #ffd54f; /* Звезды / Основной акцент */
     --success-color: #66bb6a; /* Зеленый для успеха/активности */
     --danger-color: #ff4d5a; /* Красный для опасности/отмены */
+    --active-tab-bg: #2a2e34; /* Светлее, чем secondary-bg-color для активной вкладки */
 
     /* Пастельные/приглушенные фоны для типов задач */
     --subscribe-bg: #182620; /* Темно-зеленый */
@@ -24,270 +26,89 @@
     --comment-border: #3d2b52;
     --comment-text: #b39ddb;
 
-    --view-bg: #25211b; /* Темно-желтый/коричневый */
-    --view-border: #4b3f28;
-    --view-text: #ffecb3;
+    --view-bg: #272018; /* Темно-оранжевый */
+    --view-border: #4d3d27;
+    --view-text: #ffcc80;
     
-    /* Request 1: Фон активной вкладки становится светлее */
-    --active-nav-bg: #353a42; 
-
-    /* Шрифты и размеры */
-    --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
-    --border-radius: 12px;
+    --other-bg: #1c222a; /* Темно-синий/Серый */
+    --other-border: #313e4f;
+    --other-text: #90caf9;
 }
 
-/* === СБРОС СТИЛЕЙ И БАЗА === */
+/* Общие стили и сброс */
 * {
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
-    font-family: var(--font-family);
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
-    margin: 0;
     padding: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
+    /* Request 8 & 11: Запрет на скролл/зум (уже в <meta> viewport) */
     overflow: hidden; 
-    /* Запрет скролла/масштабирования (Request 7, 10) */
-    touch-action: pan-y;
 }
 
-a {
-    color: var(--link-color);
-    text-decoration: none;
-}
-
-/* === ГЛАВНЫЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ === */
+/* Контейнеры */
 .app-root {
     display: flex;
     flex-direction: column;
-    flex-grow: 1;
-    overflow: hidden;
-    padding-bottom: 65px; /* Запас для нижней навигации */
+    height: 100vh;
+    max-height: 100vh; /* Ограничиваем высоту */
+    width: 100vw;
+    position: relative;
 }
 
-/* === 1. ХЕДЕР (Верхняя Панель) === */
-.global-header-bar {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background-color: var(--bg-color);
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid var(--border-subtle);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.header-title {
-    font-size: 18px;
-    font-weight: 600;
-    margin: 0 auto; 
-    flex-grow: 1;
-    text-align: center;
-}
-
-.back-button {
-    background: none;
-    border: none;
-    color: var(--text-color);
-    font-size: 20px;
-    padding: 0;
-    margin-right: 10px;
-    cursor: pointer;
-    position: absolute; 
-    left: 16px;
-    z-index: 1;
-}
-
-/* === 2. ОСНОВНОЕ СОДЕРЖИМОЕ === */
 .main-content {
     flex-grow: 1;
-    overflow-y: auto; /* Контент внутри скроллится (помогает убирать клавиатуру свайпом вниз) */
+    overflow-y: auto;
+    padding: 0 0 70px 0; /* Отступ снизу для таб-бара */
     -webkit-overflow-scrolling: touch;
-    padding: 0; 
+    overscroll-behavior-y: contain; /* Помогает в модальных окнах */
 }
 
 .screen-container {
-    display: none; 
-}
-
-/* Общий паддинг для контента экрана */
-.screen-content-padding {
-    padding: 16px;
-}
-
-.section-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-color);
-    margin: 20px 0 10px 0;
-}
-
-.section-title-highlight {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--accent-color);
-    margin: 15px 0 10px 0;
-}
-
-/* Request 3: Новый заголовок для списка заданий */
-.section-title-tasks-market {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--hint-color);
-    margin: 15px 0 5px 0;
-    text-transform: uppercase;
-}
-
-/* === 3. НИЖНЯЯ НАВИГАЦИЯ (Bottom Bar) (Request 1, 2) === */
-#bottom-nav-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 65px;
-    background-color: var(--secondary-bg-color);
-    border-top: 1px solid var(--border-subtle);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding-bottom: env(safe-area-inset-bottom, 5px); 
-    z-index: 20;
-}
-
-.nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: var(--hint-color);
-    cursor: pointer;
-    flex: 1;
-    transition: color 0.2s, background-color 0.2s;
+    padding: 20px 16px;
+    display: none;
     height: 100%;
-    padding-top: 5px;
-    background-color: var(--secondary-bg-color);
+    /* Request 8: Добавляем overflow, чтобы контент модалок/форм скроллился */
+    overflow-y: auto;
 }
 
-.nav-item.active {
-    color: var(--accent-color);
-    /* Request 1: Фон становится светлее */
-    background-color: var(--active-nav-bg); 
-}
-
-/* Request 2: Контейнер для иконки и бейджа */
-.nav-icon-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    height: 22px; 
-}
-
-.nav-item i {
-    font-size: 20px;
-}
-
-.nav-text {
+.screen-container.active {
     display: block;
-    font-size: 10px;
-    margin-top: 2px;
-    font-weight: 500;
-    white-space: nowrap;
 }
 
-.nav-badge {
-    position: absolute; 
-    top: -5px;
-    right: -10px; 
-    font-size: 8px; 
-    font-weight: 600;
-    color: var(--card-bg);
-    background-color: var(--success-color);
-    padding: 1px 4px;
-    border-radius: 8px;
-    min-width: 15px;
-    text-align: center;
-    line-height: 1.2;
-}
-
-.nav-item.active .nav-badge {
-    background-color: var(--accent-color);
-}
-
-/* === 4. ОБЩИЕ ЭЛЕМЕНТЫ: КАРТОЧКИ, КНОПКИ, ФОРМЫ === */
-
-/* КАРТОЧКИ */
-.task-card, .balance-card, .profile-details-card, .profile-header-card, .task-details-card, .form-card {
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius);
-    padding: 16px;
-    margin-bottom: 10px;
-    border: 1px solid var(--border-subtle);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* ФОРМЫ */
-.input-group {
-    margin-bottom: 12px;
-}
-
-.input-group label {
-    display: block;
-    font-size: 12px;
-    color: var(--hint-color);
-    margin-bottom: 4px;
-    font-weight: 500;
-}
-
-.input-group input, .input-group select, .input-group textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--border-subtle);
-    border-radius: 8px;
-    background-color: var(--secondary-bg-color);
+/* Заголовки */
+h1 {
+    font-size: 24px;
+    font-weight: 700;
     color: var(--text-color);
-    font-size: 14px;
-    transition: border-color 0.2s;
+    margin: 0 0 20px 0;
 }
 
-/* Request 9: Стоимость и Количество на одной строке */
-.form-inline-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 5px;
+h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0 0 15px 0;
 }
 
-.form-inline-group .input-group {
-    flex: 1;
-    margin-bottom: 0;
-}
-
-/* Request 8: Узкий скролл для возраста */
-.narrow-input-group {
-    max-width: 90px; 
-    display: inline-block;
-}
-
-.narrow-input-group select {
-    text-align: center;
-}
-
-/* КНОПКИ */
-.btn-primary, .btn-secondary {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
+/* --- КНОПКИ и ФОРМЫ (с анимацией) --- */
+.btn-primary, .btn-secondary, .task-create-btn {
+    padding: 12px 20px;
     font-size: 15px;
     font-weight: 600;
+    border-radius: 10px;
     cursor: pointer;
-    transition: background-color 0.2s, opacity 0.2s;
+    border: none;
+    transition: background-color 0.2s, transform 0.1s;
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
 }
 
 .btn-primary {
@@ -301,103 +122,325 @@ a {
     border: 1px solid var(--border-subtle);
 }
 
-/* === 5. РЕНДЕРИНГ ЗАДАНИЙ (task-card) === */
+/* Request 1: Анимация нажатия для кнопок */
+.btn-primary:active, .btn-secondary:active, .task-create-btn:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
 
-/* Request 14: Уменьшение толщины карточки */
-.task-card {
-    padding: 10px 16px; 
-    margin-bottom: 8px; 
+/* Формы */
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    color: var(--hint-color);
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.input-field, .textarea-field, .select-field {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    font-size: 15px;
+    appearance: none; /* Убирает стандартные стили для select */
+}
+
+.textarea-field {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.input-field:focus, .textarea-field:focus, .select-field:focus {
+    border-color: var(--link-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.2);
+}
+
+/* Специальные стили для инпутов с кнопками (Request 10) */
+.input-with-controls {
+    display: flex;
+    align-items: center;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.input-with-controls input {
+    flex-grow: 1;
+    border: none;
+    background: none;
+    padding: 10px 12px;
+    text-align: right;
+}
+
+.input-control-btn {
+    width: 40px;
+    height: 40px;
+    background-color: var(--secondary-bg-color);
+    color: var(--accent-color);
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.input-control-btn:active {
+    background-color: var(--border-subtle);
+    transform: scale(0.95);
+}
+
+.input-control-btn:first-child {
+    border-right: 1px solid var(--border-subtle);
+}
+
+.input-control-btn:last-child {
+    border-left: 1px solid var(--border-subtle);
+}
+
+/* Request 10: Стоимость и Количество на одной строке */
+.form-row-2col {
+    display: flex;
+    gap: 15px;
+}
+.form-row-2col > .form-group {
+    flex: 1;
+    min-width: 0;
+}
+
+
+/* --- ГЛОБАЛЬНЫЙ ХЕДЕР --- */
+.global-header-bar {
+    padding: 10px 16px;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-subtle);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.header-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.header-button {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 18px;
     cursor: pointer;
+    padding: 5px;
+    transition: transform 0.1s;
+}
+.header-button:active {
+    transform: scale(0.9);
+}
+
+/* --- НИЖНИЙ НАВИГАЦИОННЫЙ БАР --- */
+.bottom-nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--secondary-bg-color);
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-around;
+    padding: 5px 0 0 0; /* Отступ сверху для центрирования контента */
+    z-index: 20;
+}
+
+/* Request 2 & 3: Обновленный стиль вкладок */
+.tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 0;
+    flex: 1;
+    color: var(--hint-color);
+    cursor: pointer;
+    transition: color 0.2s, background-color 0.2s, transform 0.1s;
+    border-radius: 8px 8px 0 0;
+    margin: 0 4px; /* Небольшой отступ между кнопками */
+    min-height: 55px; /* Задаем минимальную высоту для стабильности */
+}
+
+.tab-item:active {
+    /* Request 1: Анимация нажатия */
+    transform: scale(0.95);
+}
+
+.tab-item.active {
+    /* Request 2: Фон активной вкладки становится светлее */
+    background-color: var(--active-tab-bg); 
+    color: var(--text-color);
+}
+
+.tab-icon {
+    font-size: 18px;
+    margin-bottom: 3px;
+}
+
+.tab-info-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Уменьшаем размер иконок/информации */
+}
+
+.tab-info-text {
+    font-size: 10px; /* Размер надписи */
+    font-weight: 500;
+    line-height: 1;
+}
+
+.tab-number {
+    font-size: 13px; /* Размер цифр */
+    font-weight: 700;
+    line-height: 1;
+    margin-left: 4px;
+    color: var(--accent-color);
+}
+
+.tab-item.active .tab-number {
+    color: var(--success-color); /* Например, зеленый для активного задания/баланса */
+}
+
+
+/* === 3. ЗАДАНИЯ (Worker Tasks) === */
+
+.create-task-btn-container {
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 15px;
+}
+
+.task-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-top: 10px; /* Отступ после кнопки Создать задание */
+}
+
+.task-list-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--hint-color);
+}
+
+.filter-button {
+    background: none;
+    border: none;
+    color: var(--link-color);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.task-item {
+    /* Request 15: Уменьшение толщины карточки */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--card-bg);
+    padding: 12px 15px; /* Уменьшаем отступы */
+    border-radius: 10px;
+    margin-bottom: 8px; /* Уменьшаем отступ между карточками */
+    border: 1px solid var(--card-bg); /* Изначально прозрачная граница */
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.task-item:hover {
+    background-color: #21252b;
+}
+
+.task-item:active {
+    /* Request 1: Анимация нажатия */
+    transform: scale(0.99);
+}
+
+/* Request 14: Рамка для заданий создателя (на модерации) */
+.task-item.creator-task {
+    border-color: var(--border-creator-task);
+    box-shadow: 0 0 10px rgba(255, 183, 77, 0.1);
 }
 
 .task-info {
     flex-grow: 1;
-    margin-left: 10px;
+    margin-right: 15px;
     overflow: hidden;
 }
 
-.task-logo {
-    font-size: 24px;
-    color: var(--accent-color);
-}
-
-/* Request 14: Уменьшены шрифты для компактности */
 .task-title {
-    font-size: 14px; 
-    margin: 0 0 2px 0;
+    font-size: 14px; /* Уменьшаем размер шрифта */
     font-weight: 600;
+    margin: 0 0 4px 0; /* Уменьшаем отступ */
+    color: var(--text-color);
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
-.task-description {
-    font-size: 11px; 
+.task-meta {
+    font-size: 11px;
     color: var(--hint-color);
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
-/* Request 13: Рамка для заданий на модерации */
-.task-card.moderation-card {
-    border: 2px solid var(--accent-color); 
-}
-
-/* Request 15: Блок действия с информацией о доступности */
 .task-action {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    justify-content: center;
-    min-width: 100px;
+    flex-shrink: 0;
+    text-align: right;
 }
 
-.available-info-action {
-    font-size: 10px;
-    color: var(--hint-color);
-    margin-bottom: 2px;
+/* Request 16: Убираем нижнюю стоимость, переносим информацию о количестве */
+.task-cost-badge {
+    font-weight: 700;
+    font-size: 14px; /* Увеличиваем размер для акцента */
+    color: var(--success-color);
+    margin-bottom: 4px; /* Отступ от количества */
 }
 
-.task-start-button {
-    width: auto;
-    min-width: 80px;
-    padding: 6px 8px; 
+.task-available-info {
+    font-size: 11px;
+    color: var(--link-color);
+    font-weight: 500;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 5px;
-    font-size: 12px; 
-    font-weight: 600;
-    background-color: var(--secondary-bg-color);
-    color: var(--text-color);
-    border: 1px solid var(--border-subtle);
-    border-radius: 8px;
 }
 
-.cost-badge {
-    font-weight: 700;
-    font-size: 13px; 
-    margin-left: 0;
+.task-available-info i {
+    margin-right: 3px;
 }
+
 
 /* --- Детали Задания (Task Details) --- */
 .task-details-card {
     padding: 20px 16px;
 }
 
-.task-header {
-    display: flex;
-    justify-content: flex-start;
-    align-items: flex-start;
-    margin-bottom: 10px;
+.task-details-content {
+    padding-bottom: 20px;
 }
 
-/* Request 6: Новый стиль для названия задания в деталях */
 .task-details-title-display {
     font-size: 18px;
     margin: 0 0 15px 0;
@@ -411,6 +454,149 @@ a {
     border-radius: 6px;
     font-weight: 600;
     white-space: nowrap;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+.task-detail-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.task-detail-section:first-child {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.task-detail-section h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--hint-color);
+    margin: 0 0 8px 0;
+}
+
+.task-detail-section p, .task-detail-section ul {
+    font-size: 14px;
+    color: var(--text-color);
+    line-height: 1.5;
+    margin: 0 0 10px 0;
+}
+
+.task-detail-list {
+    list-style: none;
+    padding: 0;
+}
+
+.task-detail-list li {
+    background-color: var(--secondary-bg-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+.task-detail-list li span:first-child {
+    color: var(--hint-color);
+}
+
+.task-detail-list li span:last-child {
+    font-weight: 600;
+}
+
+
+/* === 4. СОЗДАТЬ ЗАДАНИЕ (Create Task) === */
+.task-create-btn {
+    background-color: var(--link-color);
+    color: var(--text-color);
+}
+
+/* === 5. ПРОФИЛЬ (Profile Menu) === */
+.profile-card {
+    background-color: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.avatar {
+    width: 50px;
+    height: 50px;
+    background-color: var(--secondary-bg-color);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    color: var(--accent-color);
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.profile-name {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-color);
+}
+
+.profile-rating {
+    font-size: 14px;
+    color: var(--hint-color);
+    display: flex;
+    align-items: center;
+}
+
+.profile-rating i {
+    color: var(--accent-color);
+    margin-right: 5px;
+}
+
+.profile-info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.profile-info-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-top: 1px dashed var(--border-subtle);
+    font-size: 14px;
+}
+.profile-info-list li:first-child {
+    border-top: none;
+}
+
+.profile-info-list span:first-child {
+    color: var(--hint-color);
+}
+
+.profile-info-list span:last-child {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.profile-link {
+    display: block;
+    color: var(--link-color);
+    text-align: center;
+    padding: 10px 0;
+    font-size: 14px;
+    cursor: pointer;
+    border-top: 1px solid var(--border-subtle);
+    margin-top: 10px;
 }
 
 /* === 6. БАЛАНС (Balance Menu) === */
@@ -421,25 +607,187 @@ a {
     padding: 8px 0;
 }
 
-.balance-item.total-balance {
+.balance-item-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.balance-item-value {
     font-size: 16px;
     font-weight: 700;
-    border-bottom: 1px solid var(--border-subtle);
-    margin-bottom: 10px;
-    padding-bottom: 10px;
+    color: var(--accent-color);
 }
 
-/* Request 11: Стиль для "Готово к выводу" */
-.balance-item.withdrawable-balance {
-    padding-top: 10px;
-    border-top: 1px solid var(--border-subtle);
+.balance-item.total .balance-item-value {
+    font-size: 20px;
+    color: var(--success-color);
+}
+
+.balance-item.pending .balance-item-value {
+    color: var(--link-color);
+}
+
+
+/* --- МОДАЛЬНЫЕ ОКНА --- */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+    padding: 20px;
+    /* Request 8: Убедимся, что фон не скроллится вместе с модалкой */
+    overflow: auto; 
+    -webkit-overflow-scrolling: touch;
+}
+
+.modal-content {
+    background-color: var(--secondary-bg-color);
+    padding: 25px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    max-height: 90vh; /* Ограничиваем высоту для мобильных */
+    overflow-y: auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    transform: scale(1);
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.modal-content p, .modal-content ul, .modal-content ol {
+    font-size: 13px;
+    color: var(--text-color);
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+.modal-content ul, .modal-content ol {
+    margin-left: 20px;
+    padding-left: 0;
+}
+
+.modal-content li {
+    margin-bottom: 5px;
+    color: var(--hint-color);
+}
+.modal-content li strong {
+    color: var(--text-color);
+}
+
+.modal-content button {
     margin-top: 10px;
+}
+
+.modal-content .muted-text {
+    color: var(--hint-color);
+    font-style: italic;
+}
+
+
+/* --- КОНТЕЙНЕР ДЛЯ ВЫБОРА ВОЗРАСТА (Request 9) --- */
+.age-picker-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--secondary-bg-color);
+    border-top: 1px solid var(--border-subtle);
+    z-index: 40;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-out;
+    padding: 15px 0;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.age-picker-container.visible {
+    transform: translateY(0);
+}
+
+.age-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px 10px 15px;
+}
+
+.age-picker-header h3 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 16px;
+}
+
+.age-picker-done-btn {
+    background: none;
+    border: none;
+    color: var(--link-color);
+    font-size: 15px;
     font-weight: 600;
-    color: var(--success-color);
+    cursor: pointer;
+    padding: 5px;
 }
 
-.balance-item.withdrawable-balance .balance-label {
-    color: var(--success-color);
+.age-picker-wheel-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 150px;
+    position: relative;
+    overflow: hidden;
 }
 
-/* ... (Прочие стили иконки, модалки) ... */
+.age-picker-selection-indicator {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    height: 30px;
+    border-top: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.age-picker-wheel {
+    overflow-y: scroll;
+    height: 100%;
+    width: 60px; /* Request 9: Ограничиваем ширину */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+    text-align: center;
+    padding-top: 60px; /* Отступ для центрирования первого элемента */
+    padding-bottom: 60px; /* Отступ для центрирования последнего элемента */
+    scroll-snap-type: y mandatory; /* Привязка к элементам */
+}
+
+.age-picker-wheel::-webkit-scrollbar {
+    display: none;
+}
+
+.age-picker-item {
+    height: 30px; /* Высота элемента должна совпадать с индикатором */
+    line-height: 30px;
+    font-size: 18px;
+    color: var(--hint-color);
+    transition: color 0.2s, transform 0.2s;
+    scroll-snap-align: center;
+    font-weight: 500;
+}
+
+.age-picker-item.selected {
+    color: var(--text-color);
+    font-weight: 700;
+    transform: scale(1.1);
+}

@@ -3,61 +3,208 @@
 <head>
     <meta charset="UTF-8" />
     <title>Profit Pro Hub</title>
+    <!-- Request 8 & 11: Убеждаемся, что зум отключен и масштаб статичен -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0" />
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJc5fR5Wc4W3uI5h/4Q/2h+L72V6W7tT6J5l1S4uU5h/4Q/2h+L72V6W7tT6J5l1S4uU5D5d5a5G5u5" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJc5fR5Wc4W3uI5h/4Q/2h+L72V6W7tT6J5l1S4uU5h/4Q/2h+L72V6W7tT6J5l1S4uU5D5d5a5G5u5" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body id="app-body">
     <div id="app-root" class="app-root">
 
-        <header id="global-header-bar" class="global-header-bar">
+        <!-- Глобальный хедер (Используется для деталей заданий и создания) -->
+        <header id="global-header-bar" class="global-header-bar" style="display: none;">
+            <!-- Сюда будет рендериться заголовок и кнопка "Назад" -->
         </header>
 
         <main class="main-content">
+
+            <!-- 1. Экран исполнителя: Задания -->
             <div id="worker-tasks-container" class="screen-container active">
+                <!-- Request 4: Кнопка "Создать задание" остается наверху -->
+                <div class="create-task-btn-container">
+                    <button id="create-task-btn" class="btn-primary task-create-btn">
+                        Создать задание
+                    </button>
+                </div>
+
+                <!-- Заголовок и фильтр -->
+                <div class="task-list-header">
+                    <!-- Request 4: "Задания" переносится сюда -->
+                    <h2 class="task-list-title">Все задания на рынке</h2>
+                    <button id="tasks-filter-btn" class="filter-button">
+                        <i class="fas fa-filter"></i> Фильтр
+                    </button>
+                </div>
+
+                <!-- Список заданий -->
+                <div id="task-list">
+                    <!-- Здесь будут карточки заданий -->
+                </div>
             </div>
 
+            <!-- 2. Экран исполнителя: Детали задания -->
             <div id="task-details-container" class="screen-container" style="display: none;">
-            </div>
-
-            <div id="create-task-container" class="screen-container" style="display: none;">
-            </div>
-
-            <div id="balance-menu-container" class="screen-container" style="display: none;">
+                <div id="task-details-content">
+                    <!-- Здесь будут детали задания и кнопка "Выполнить" -->
+                </div>
             </div>
             
+            <!-- 3. Экран исполнителя: Создание задания (форма) -->
+            <div id="create-task-container" class="screen-container" style="display: none;">
+                <form id="create-task-form">
+                    <h2>Новое задание</h2>
+
+                    <div class="form-group">
+                        <label for="task-title-input">Название задания (до 50 симв.)</label>
+                        <input type="text" id="task-title-input" class="input-field" maxlength="50" required placeholder="Например: Подписка на канал @mychannel"/>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="task-type-select">Тип задания</label>
+                        <select id="task-type-select" class="select-field" required>
+                            <option value="subscribe">Подписка</option>
+                            <option value="comment">Комментарий</option>
+                            <option value="view">Просмотр</option>
+                            <option value="other">Другое</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="task-description-input">Подробное описание и ссылка</label>
+                        <textarea id="task-description-input" class="textarea-field" required placeholder="Опишите, что нужно сделать. Обязательно добавьте ссылку на объект (канал/чат/пост)."></textarea>
+                    </div>
+                    
+                    <h3>Целевая аудитория (опционально)</h3>
+                    <div class="form-group">
+                        <label for="task-gender-select">Пол</label>
+                        <select id="task-gender-select" class="select-field">
+                            <option value="">Не важно</option>
+                            <option value="M">Мужской</option>
+                            <option value="F">Женский</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="task-country-input">Страна (через запятую)</label>
+                        <input type="text" id="task-country-input" class="input-field" placeholder="Например: Россия, Казахстан"/>
+                    </div>
+                    
+                    <!-- Request 9: Добавляем поле для выбора возраста, которое будет открывать скролл -->
+                    <div class="form-group">
+                        <label for="task-age-min-input">Минимальный возраст (от)</label>
+                        <input type="number" id="task-age-min-input" class="input-field age-input" readonly required value="18" min="18" max="99" data-target="min"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="task-age-max-input">Максимальный возраст (до)</label>
+                        <input type="number" id="task-age-max-input" class="input-field age-input" readonly required value="99" min="18" max="99" data-target="max"/>
+                    </div>
+
+                    <h3>Бюджет</h3>
+                    
+                    <!-- Request 10: Стоимость и Количество на одной строке -->
+                    <div class="form-row-2col">
+                        <div class="form-group">
+                            <label for="task-cost-input">Стоимость за 1 выполнение (₽)</label>
+                            <div class="input-with-controls">
+                                <button type="button" class="input-control-btn decrease-cost">-</button>
+                                <input type="number" id="task-cost-input" class="input-field" required value="0.25" min="0.10" max="100.00" step="0.05" style="text-align: center;"/>
+                                <button type="button" class="input-control-btn increase-cost">+</button>
+                            </div>
+                        </div>
+    
+                        <div class="form-group">
+                            <label for="task-quantity-input">Количество выполнений</label>
+                            <div class="input-with-controls">
+                                <button type="button" class="input-control-btn decrease-quantity">-</button>
+                                <input type="number" id="task-quantity-input" class="input-field" required value="100" min="10" max="10000" step="10" style="text-align: center;"/>
+                                <button type="button" class="input-control-btn increase-quantity">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Итоговая стоимость (с учетом комиссии):</label>
+                        <p id="total-cost-display" style="font-size: 16px; font-weight: 700; color: var(--accent-color);">0.00 ₽</p>
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        Отправить на модерацию
+                    </button>
+                </form>
+            </div>
+            
+            <!-- 4. Экран баланса -->
+            <div id="balance-menu-container" class="screen-container" style="display: none;">
+                <h2>Баланс</h2>
+                <div id="balance-info-list">
+                    <!-- Здесь будет информация о балансе -->
+                </div>
+                <button class="btn-primary" style="margin-top: 20px;">
+                    Вывести средства
+                </button>
+                <button class="btn-secondary" style="margin-top: 10px;">
+                    Пополнить баланс
+                </button>
+            </div>
+
+            <!-- 5. Экран профиля -->
             <div id="profile-menu-container" class="screen-container" style="display: none;">
+                <!-- Здесь будет профиль -->
             </div>
 
         </main>
 
-        <nav id="bottom-nav-bar"></nav>
-
+        <!-- Нижний навигационный бар -->
+        <footer class="bottom-nav-bar">
+            <!-- Request 2 & 3: Обновленная структура табов -->
+            <div class="tab-item active" data-screen="worker-tasks-container">
+                <div class="tab-info-block">
+                    <i class="fas fa-list-check tab-icon"></i>
+                    <span id="tasks-count-display" class="tab-number">10</span>
+                </div>
+                <span class="tab-info-text">Задания</span>
+            </div>
+            <div class="tab-item" data-screen="balance-menu-container">
+                <div class="tab-info-block">
+                    <i class="fas fa-wallet tab-icon"></i>
+                    <span id="balance-value-display" class="tab-number">50.75</span>
+                </div>
+                <span class="tab-info-text">Баланс</span>
+            </div>
+            <div class="tab-item" data-screen="profile-menu-container">
+                <div class="tab-info-block">
+                    <i class="fas fa-user tab-icon"></i>
+                    <!-- Здесь нет числа, оставим пустым или можно добавить рейтинг -->
+                </div>
+                <span class="tab-info-text">Профиль</span>
+            </div>
+        </footer>
     </div>
-
-    <div id="terms-modal" class="modal-backdrop" style="display:none;">
-        <div class="modal-content">
-            <h3>Пользовательское соглашение</h3>
-            <p>
-                Этот текст — заглушка. В реальном приложении здесь будет полный юридический текст соглашения.
-                Оплата заданий в Эскроу обеспечивает вашу безопасность.
-            </p>
-            <p class="muted-text">
-                Обязательно ознакомьтесь с условиями.
-            </p>
-            <button id="modal-close-terms" class="btn-primary">
-                Закрыть
-            </button>
+    
+    <!-- МОДАЛЬНЫЕ ОКНА ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ В СТРУКТУРЕ -->
+    
+    <!-- Модальное окно для выбора возраста (Request 9) -->
+    <div id="age-picker-modal" class="age-picker-container">
+        <div class="age-picker-header">
+            <h3 id="age-picker-title">Выберите возраст</h3>
+            <button class="age-picker-done-btn" id="age-picker-done">Готово</button>
+        </div>
+        <div class="age-picker-wheel-wrapper">
+            <div class="age-picker-selection-indicator"></div>
+            <div class="age-picker-wheel" id="age-picker-wheel">
+                <!-- Элементы возраста будут сгенерированы в JS -->
+            </div>
         </div>
     </div>
 
+    <!-- Модальное окно Рейтинга -->
     <div id="rating-modal" class="modal-backdrop" style="display:none;">
         <div class="modal-content">
-            <h3>Ваш рейтинг</h3>
+            <h3>Что такое Рейтинг?</h3>
             <p>
                 Рейтинг — это ключевой показатель надежности исполнителя.
             </p>
@@ -72,6 +219,7 @@
         </div>
     </div>
 
+    <!-- Модальное окно Админ-бота -->
     <div id="admin-bot-modal" class="modal-backdrop" style="display:none;">
         <div class="modal-content">
             <h3>Админ-бот для проверки</h3>
