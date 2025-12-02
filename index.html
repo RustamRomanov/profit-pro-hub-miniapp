@@ -3,106 +3,397 @@
 <head>
     <meta charset="UTF-8" />
     <title>Profit Pro Hub</title>
+    <!-- КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Запрет на масштабирование (статичный экран) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0" />
 
+    <!-- Telegram WebApp JS (Обязательно для работы в Telegram) -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+    <!-- Иконки (простая библиотека для мобильного вида) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJc5fR5Wc4W3uI5h/4Q/2h+L72V6W7tT6J5l1S4uU5h/4Q/2h+L72V6W7tT6J5l1S4uU5D5d5a5G5u5" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
+    <!-- Наши стили -->
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body id="app-body">
     <div id="app-root" class="app-root">
 
-        <header id="global-header-bar" class="global-header-bar">
-            </header>
+        <!-- Глобальный хедер (Верхняя полоса) -->
+        <header id="app-header" class="app-header">
+            <div id="header-title" class="header-title">Главная</div>
+            <button id="settings-button" class="btn-icon">
+                <i class="fas fa-cog"></i>
+            </button>
+        </header>
 
-        <main class="main-content">
-
-            <div id="worker-tasks-container" class="screen-container active">
+        <!-- Основной контейнер страниц -->
+        <main id="app-content" class="app-content">
+            
+            <!-- 1. Страница: Профиль/Главная -->
+            <section id="page-profile" class="app-page active">
+                <div id="user-info" class="card user-info-card">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name" id="profile-name">Имя Пользователя</div>
+                        <div class="user-rating-box">
+                            <span class="label">Рейтинг:</span>
+                            <span id="profile-rating" class="rating-value">5.0</span>
+                            <button id="rating-info-button" class="btn-icon-link">
+                                <i class="fas fa-question-circle"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-            <div id="balance-menu-container" class="screen-container" style="display: none;">
+                <!-- Блок Баланс (Изменения по требованию) -->
+                <div class="card balance-card">
+                    <h2 class="card-title">Финансы</h2>
+                    <div class="balance-grid">
+                        <!-- Общий баланс -->
+                        <div class="balance-item">
+                            <div class="balance-label">Общий баланс</div>
+                            <div class="balance-value" id="balance-total">0.00 ₽</div>
+                        </div>
+                        <!-- Ожидание поступлений (в эскроу) -->
+                        <div class="balance-item">
+                            <div class="balance-label hint-color">Ожидание поступлений (в эскроу)</div>
+                            <div class="balance-value hint-color" id="balance-pending">0.00 ₽</div>
+                        </div>
+                        <!-- Готово к выводу (расчетное поле) -->
+                        <div class="balance-item">
+                            <div class="balance-label success-color">Готово к выводу</div>
+                            <div class="balance-value success-color" id="balance-ready-to-withdraw">0.00 ₽</div>
+                        </div>
+                    </div>
+                    <div class="button-group-bottom">
+                        <button class="btn-primary full-width">Вывод средств</button>
+                        <button id="topup-button" class="btn-secondary full-width">Пополнить баланс</button>
+                    </div>
                 </div>
 
-            <div id="profile-menu-container" class="screen-container" style="display: none;">
+                <div class="card stat-card">
+                    <h2 class="card-title">Статистика</h2>
+                    <div class="stat-grid">
+                        <div>
+                            <div class="stat-value" id="stat-tasks-completed">0</div>
+                            <div class="stat-label">Заданий выполнено</div>
+                        </div>
+                    </div>
                 </div>
 
-            <div id="task-details-container" class="screen-container" style="display: none;">
+                <div class="card filled-status-card" id="profile-status-card">
+                    <h2 class="card-title">Ваш профиль</h2>
+                    <p id="profile-status-message"></p>
+                    <button id="fill-profile-button" class="btn-secondary full-width" style="display:none;">Заполнить анкету</button>
+                    <button id="accept-terms-button" class="btn-secondary full-width" style="display:none;">Принять соглашение</button>
+                </div>
+            </section>
+
+            <!-- 2. Страница: Задания -->
+            <section id="page-tasks" class="app-page">
+                
+                <!-- Хедер страницы Задания (Изменения по требованию) -->
+                <div class="tasks-page-header">
+                    <!-- Наверху только кнопка Создать задание -->
+                    <button id="create-task-btn" class="btn-primary full-width">
+                        <i class="fas fa-plus-circle"></i> Создать задание
+                    </button>
+                </div>
+                
+                <!-- 1. Мои задания (на модерации) -->
+                <h2 class="section-title">Мои задания</h2>
+                <div id="creator-tasks-list" class="task-list">
+                    <!-- Задания созданные пользователем (только на модерации) -->
+                    <div class="empty-state">Нет заданий на модерации.</div>
                 </div>
 
-            <div id="create-task-container" class="screen-container" style="display: none;">
+                <!-- 2. Все задания на рынке -->
+                <h2 class="section-title market-title">Все задания на рынке</h2>
+                <div id="worker-tasks-list" class="task-list">
+                    <!-- Задания для заработка -->
+                    <div class="empty-state">Пока нет активных заданий.</div>
                 </div>
+            </section>
+
+            <!-- 3. Страница: Настройки -->
+            <section id="page-settings" class="app-page">
+                <h2 class="section-title">Настройки</h2>
+                <div class="settings-list">
+                    <button class="setting-item" id="setting-edit-profile">
+                        <span>Редактировать профиль</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button class="setting-item" id="setting-admin-bot-info">
+                        <span>Настройка админ-бота</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button class="setting-item danger" id="setting-logout">
+                        <span>Выход / Сброс данных</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </section>
 
         </main>
 
-        <footer id="bottom-nav-bar" class="tab-bar">
-            </footer>
+        <!-- Нижняя навигация -->
+        <nav class="app-nav">
+            <div id="nav-profile" class="nav-item">
+                <a href="#page-profile" class="active">
+                    <i class="fas fa-user"></i>
+                    <span>Профиль</span>
+                </a>
+            </div>
+            <div id="nav-tasks" class="nav-item">
+                <a href="#page-tasks">
+                    <i class="fas fa-list-check"></i>
+                    <!-- Изменение названия вкладки -->
+                    <span>Задания</span>
+                </a>
+            </div>
+            <div id="nav-settings" class="nav-item">
+                <a href="#page-settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Настройки</span>
+                </a>
+            </div>
+        </nav>
 
-    </div>
+        <!-- ======================= МОДАЛЬНЫЕ ОКНА ======================= -->
 
-    <div id="terms-modal" class="modal-backdrop" style="display:none;">
-        <div class="modal-content">
-            <h3>Пользовательское соглашение</h3>
-            <p class="muted-text">
-                Здесь будет полный текст соглашения. Основные пункты:
-            </p>
-            <ul>
-                <li>Запрет на использование ботов и накруток.</li>
-                <li>Обязательное нахождение в канале 7 дней.</li>
-                <li>Немедленная блокировка аккаунта при нарушениях.</li>
-            </ul>
-            <p>
-                Соглашение необходимо принять, чтобы начать работу.
-            </p>
-            <button id="modal-accept-terms" class="btn-primary">
-                Принять
-            </button>
-            <button id="modal-close-terms" class="btn-secondary">
-                Закрыть
-            </button>
+        <!-- Модальное окно: Просмотр задания -->
+        <div id="task-details-modal" class="modal-backdrop" style="display:none;">
+            <div class="modal-content large-modal" id="task-details-content">
+                <!-- Кнопка закрытия/назад (свайп также будет работать) -->
+                <button id="modal-close-task-details" class="btn-icon modal-close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <!-- Убран дублирующийся заголовок задания из-за требования -->
+
+                <div class="task-detail-header">
+                    <div class="task-logo" id="detail-task-logo"></div>
+                    <div class="task-type-badge" id="detail-task-type">Тип задания</div>
+                </div>
+                
+                <h2 class="task-detail-title" id="detail-task-title">Название Задания</h2>
+                
+                <div class="task-detail-stats">
+                    <div class="stat-item">
+                        <span class="value" id="detail-task-reward">0.00 ₽</span>
+                        <span class="label">Вознаграждение</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="value" id="detail-task-limit">0/0</span>
+                        <span class="label">Выполнено</span>
+                    </div>
+                </div>
+
+                <div class="task-detail-description">
+                    <h3>Условия:</h3>
+                    <p id="detail-task-description">Описание задания...</p>
+                </div>
+
+                <div class="task-detail-action">
+                    <h3>Подтверждение:</h3>
+                    <p class="muted-text">Что нужно прислать для проверки:</p>
+                    <p id="detail-task-proof">Скриншот</p>
+                    
+                    <textarea id="task-proof-input" rows="3" placeholder="Ваш отчет/текст подтверждения..."></textarea>
+                    
+                    <button id="accept-task-button" class="btn-primary full-width">
+                        Принять задание
+                    </button>
+                    <div class="task-status-message" id="task-status-message" style="display:none;"></div>
+                </div>
+
+            </div>
         </div>
-    </div>
 
-    <div id="rating-modal" class="modal-backdrop" style="display:none;">
-        <div class="modal-content">
-            <h3>Что такое рейтинг?</h3>
-            <p class="muted-text">
-                Рейтинг — это ключевой показатель надежности исполнителя.
-            </p>
-            <ul>
-                <li>За успешно выполненные задания рейтинг растёт.</li>
-                <li>За частые нарушения и отмены — снижается.</li>
-                <li>Исполнители с высоким рейтингом получают доступ к более дорогим заданиям.</li>
-            </ul>
-            <button id="modal-close-rating" class="btn-primary">
-                Понятно
-            </button>
+        <!-- Модальное окно: Создание задания (КРИТИЧЕСКИЕ ИЗМЕНЕНИЯ) -->
+        <div id="create-task-modal" class="modal-backdrop" style="display:none;">
+            <div class="modal-content large-modal" id="create-task-content">
+                <button id="modal-close-create-task" class="btn-icon modal-close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="modal-title">Создать новое задание</h2>
+                
+                <form id="create-task-form">
+
+                    <label for="task-type">Тип задания:</label>
+                    <select id="task-type" required>
+                        <option value="subscribe">Подписка</option>
+                        <option value="comment">Комментарий</option>
+                        <option value="view">Просмотр</option>
+                    </select>
+
+                    <label for="task-title">Название задания (до 30 символов):</label>
+                    <input type="text" id="task-title" maxlength="30" required placeholder="Например: Подпишись на наш канал!" />
+
+                    <label for="task-description">Полное описание и инструкции:</label>
+                    <textarea id="task-description" rows="4" required placeholder="Опишите, что нужно сделать шаг за шагом."></textarea>
+
+                    <label for="task-url">Ссылка для выполнения:</label>
+                    <input type="url" id="task-url" required placeholder="https://t.me/your_channel" />
+
+                    <!-- Условия целевой аудитории -->
+                    <h3 class="subsection-title">Целевая аудитория</h3>
+                    
+                    <!-- Возраст (Скролл цифр) -->
+                    <label for="task-min-age">Минимальный возраст (лет):</label>
+                    <select id="task-min-age" class="narrow-select" required>
+                        <!-- Заполняется JS -->
+                    </select>
+
+                    <label for="task-gender">Пол:</label>
+                    <select id="task-gender" required>
+                        <option value="any">Любой</option>
+                        <option value="M">Мужской</option>
+                        <option value="F">Женский</option>
+                    </select>
+
+                    <!-- Выравнивание Стоимость и Количество в одну строку (Grid/Flex) -->
+                    <h3 class="subsection-title">Бюджет и объем</h3>
+                    <div class="two-column-input-grid">
+                        <div class="input-group">
+                            <label for="task-reward">Стоимость (₽/выполнение):</label>
+                            <input type="number" id="task-reward" min="0.50" step="0.01" required placeholder="0.50" />
+                        </div>
+                        <div class="input-group">
+                            <label for="task-limit">Количество выполнений:</label>
+                            <input type="number" id="task-limit" min="10" required placeholder="10" />
+                        </div>
+                    </div>
+
+                    <p class="muted-text total-cost-info">
+                        Общий бюджет (стоимость * количество): <span id="total-task-cost">0.00 ₽</span>
+                    </p>
+
+                    <button type="submit" class="btn-primary full-width submit-btn">
+                        Опубликовать (На модерацию)
+                    </button>
+                </form>
+
+            </div>
         </div>
-    </div>
 
-    <div id="admin-bot-modal" class="modal-backdrop" style="display:none;">
-        <div class="modal-content">
-            <h3>Админ-бот для проверки</h3>
-            <p class="muted-text">
-                Чтобы задания на подписку, просмотр и комментарии корректно проверялись,
-                добавьте админ-бота в свой канал или чат.
-            </p>
-            <ol>
-                <li>Откройте ваш канал или чат в Telegram.</li>
-                <li>Перейдите в «Управление» → «Администраторы».</li>
-                <li>Добавьте бота по имени, которое указано в интерфейсе.</li>
-                <li>Выдайте ему права на просмотр участников и сообщений.</li>
-            </ol>
-            <button id="modal-copy-botname" class="btn-primary">
-                Скопировать имя бота
-            </button>
-            <button id="modal-close-admin-bot" class="btn-secondary">
-                Закрыть
-            </button>
+        <!-- Модальное окно: Соглашение -->
+        <div id="terms-modal" class="modal-backdrop" style="display:none;">
+            <div class="modal-content">
+                <button id="modal-close-terms" class="btn-icon modal-close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="modal-title">Пользовательское соглашение</h2>
+                <div class="modal-content-scroll">
+                    <!-- Заглушка для текста соглашения -->
+                    <h3>1. Общие положения</h3>
+                    <p>
+                        Этот документ является соглашением между пользователем и платформой "Profit Pro Hub".
+                        Используя приложение, вы подтверждаете согласие со всеми условиями.
+                    </p>
+                    <h3>2. Ответственность</h3>
+                    <p>
+                        Пользователь обязуется не публиковать материалы, нарушающие законодательство РФ,
+                        правила Telegram и общепринятые нормы морали. Запрещены: мат, агрессия, порнография,
+                        наркотики, мошенничество. Администрация оставляет за собой право блокировать нарушителей.
+                    </p>
+                    <h3>3. Финансы</h3>
+                    <p>
+                        Баланс состоит из "Готово к выводу" (доступные средства) и "Ожидание поступлений" (средства в эскроу,
+                        замороженные на время проверки задания). Вывод средств доступен по запросу и может занимать до 24 часов.
+                    </p>
+                    <p class="muted-text">
+                        ... полный текст соглашения будет предоставлен.
+                    </p>
+                </div>
+                
+                <button id="accept-terms-btn" class="btn-primary full-width">
+                    Принять условия и продолжить
+                </button>
+            </div>
         </div>
+
+        <!-- Модальное окно: О рейтинге -->
+        <div id="rating-modal" class="modal-backdrop" style="display:none;">
+            <div class="modal-content">
+                <button id="modal-close-rating" class="btn-icon modal-close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="modal-title">Система рейтинга</h2>
+                <h3>Для исполнителя</h3>
+                <p>
+                    Рейтинг отражает надежность и качество работы исполнителя.
+                </p>
+                <ul>
+                    <li>За успешно выполненные задания рейтинг растёт.</li>
+                    <li>За частые нарушения и отмены — снижается.</li>
+                    <li>Исполнители с высоким рейтингом получают доступ к более дорогим заданиям.</li>
+                </ul>
+                <button id="modal-close-rating-info" class="btn-primary full-width">
+                    Понятно
+                </button>
+            </div>
+        </div>
+
+        <!-- Инструкция по админ-боту -->
+        <div id="admin-bot-modal" class="modal-backdrop" style="display:none;">
+            <div class="modal-content">
+                <button id="modal-close-admin-bot" class="btn-icon modal-close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="modal-title">Админ-бот для проверки</h2>
+                <p class="muted-text">
+                    Чтобы задания на подписку, просмотр и комментарии корректно проверялись,
+                    добавьте админ-бота в свой канал или чат.
+                </p>
+                <ol>
+                    <li>Откройте ваш канал или чат в Telegram.</li>
+                    <li>Перейдите в «Управление» → «Администраторы».</li>
+                    <li>Добавьте бота по имени, которое указано в интерфейсе.</li>
+                    <li>Выдайте ему права на просмотр участников и сообщений.</li>
+                </ol>
+                <button id="modal-copy-botname" class="btn-primary full-width">
+                    Скопировать имя бота
+                </button>
+            </div>
+        </div>
+
+        <!-- Модальное окно: Редактирование профиля -->
+        <div id="edit-profile-modal" class="modal-backdrop" style="display:none;">
+            <div class="modal-content">
+                <button id="modal-close-edit-profile" class="btn-icon modal-close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h2 class="modal-title">Редактировать профиль</h2>
+                <form id="edit-profile-form">
+                    <label for="edit-age">Возраст:</label>
+                    <select id="edit-age" class="narrow-select" required>
+                        <!-- Заполняется JS -->
+                    </select>
+
+                    <label for="edit-gender">Пол:</label>
+                    <select id="edit-gender" required>
+                        <option value="M">Мужской</option>
+                        <option value="F">Женский</option>
+                    </select>
+
+                    <label for="edit-country">Страна:</label>
+                    <select id="edit-country" required>
+                        <!-- Заполняется JS -->
+                    </select>
+
+                    <button type="submit" class="btn-primary full-width">
+                        Сохранить изменения
+                    </button>
+                </form>
+            </div>
+        </div>
+        
     </div>
 
+    <!-- Наш основной JS -->
     <script src="app.js"></script>
 </body>
 </html>
