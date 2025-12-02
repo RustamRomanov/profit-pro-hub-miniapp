@@ -15,18 +15,9 @@
     --success-color: #66bb6a; /* Зеленый для успеха/активности */
     --danger-color: #ff4d5a; /* Красный для опасности/отмены */
 
-    /* Цвета для фоновых секций */
-    --section-bg: #15181c;
-
-    /* Градиенты */
-    --header-gradient: linear-gradient(135deg, #1f2933, #111827);
-    --task-subscribe-gradient: linear-gradient(135deg, #2e7d32, #1b5e20);
-    --task-comment-gradient: linear-gradient(135deg, #6a1b9a, #4a148c);
-    --task-view-gradient: linear-gradient(135deg, #f9a825, #f57f17);
-
-    /* Дополнительные цвета для типовых карточек */
-    --subscribe-bg: #1b2b1f;
-    --subscribe-border: #2e7d32;
+    /* Пастельные/приглушенные фоны для типов задач (для лучшей видимости) */
+    --subscribe-bg: #182620; /* Темно-зеленый */
+    --subscribe-border: #274334;
     --subscribe-text: #a5d6a7;
 
     --comment-bg: #231b2a; /* Темно-фиолетовый */
@@ -41,117 +32,117 @@
     --active-nav-bg: #2a3138; 
 
     /* Шрифты и размеры */
-    --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    --font-size-base: 14px;
-    --font-size-small: 12px;
-
-    /* Радиусы и тени */
-    --border-radius-base: 12px;
-    --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.45);
-
-    /* Прочее */
-    --transition-fast: 0.2s ease-in-out;
+    --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+    --border-radius: 12px;
 }
 
-/* Базовые стили */
-
-*,
-*::before,
-*::after {
+/* === СБРОС СТИЛЕЙ И БАЗА === */
+* {
     box-sizing: border-box;
 }
 
-html, body {
+body {
+    font-family: var(--font-family);
+    background-color: var(--bg-color);
+    color: var(--text-color);
     margin: 0;
     padding: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    font-family: var(--font-family);
-    font-size: var(--font-size-base);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-    overflow: hidden;
-}
-
-/* Контейнер приложения */
-#app {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    background-color: var(--bg-color);
-    color: var(--text-color);
     display: flex;
     flex-direction: column;
+    height: 100vh;
+    overflow: hidden; /* Основной контейнер не скроллится */
+    /* Запрет скролла/масштабирования - уже в index.html, но добавим для безопасности */
+    touch-action: pan-y;
 }
 
-/* Глобальный хедер */
-#global-header {
-    position: fixed;
+a {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+/* === ГЛАВНЫЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ === */
+.app-root {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+    padding-bottom: 70px; /* Запас для нижней навигации */
+}
+
+/* === 1. ХЕДЕР (Верхняя Панель) === */
+.global-header-bar {
+    position: sticky;
     top: 0;
-    left: 0;
-    right: 0;
-    height: 52px;
-    padding: 8px 14px;
-    background: var(--header-gradient);
+    z-index: 10;
+    background-color: var(--bg-color);
+    padding: 14px 16px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    z-index: 20;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-subtle);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .header-title {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
-    margin: 0;
-    color: var(--text-color);
+    margin: 0 auto; /* Центрирование */
+    flex-grow: 1;
+    text-align: center;
 }
 
 .back-button {
-    background: transparent;
+    background: none;
     border: none;
     color: var(--text-color);
-    font-size: 18px;
-    display: flex;
-    align-items: center;
+    font-size: 20px;
+    padding: 0;
+    margin-right: 10px;
     cursor: pointer;
-    padding: 4px;
+    position: absolute; /* Позиционируем абсолютно, чтобы не мешал центрированию заголовка */
+    left: 16px;
+    z-index: 1;
 }
 
-.back-button i {
-    margin-right: 4px;
-}
-
-/* Основной контейнер контента */
-#main-content {
-    flex: 1;
-    margin-top: 52px;
-    margin-bottom: 65px; /* отступ под нижнюю навигацию */
-    overflow-y: auto;
+/* === 2. ОСНОВНОЕ СОДЕРЖИМОЕ === */
+.main-content {
+    flex-grow: 1;
+    overflow-y: auto; /* Контент внутри скроллится */
     -webkit-overflow-scrolling: touch;
+    padding: 0; 
 }
 
-/* Общий класс экранов */
-.screen {
-    display: none;
-    height: 100%;
-}
-
-.screen.active {
-    display: block;
+.screen-container {
+    display: none; /* Управляется JS */
 }
 
 /* Общий паддинг для контента экрана */
 .screen-content-padding {
-    padding: 14px 14px 18px;
+    padding: 16px;
 }
 
-/* Нижняя навигация */
+.section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 20px 0 10px 0;
+}
+
+.section-title-highlight {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--accent-color);
+    margin: 15px 0 10px 0;
+}
+
+/* Новый заголовок для списка заданий */
+.section-title-tasks {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 20px 0 10px 0;
+}
+
+/* === 3. НИЖНЯЯ НАВИГАЦИЯ (Bottom Bar) === */
 #bottom-nav-bar {
     position: fixed;
     bottom: 0;
@@ -168,24 +159,18 @@ body {
 }
 
 .nav-item {
-    flex: 1;
-    text-align: center;
-    color: var(--hint-color);
-    text-decoration: none;
-    font-size: 11px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    padding: 6px 0;
-    transition: background-color var(--transition-fast), color var(--transition-fast), transform 0.1s;
-    border-radius: 14px;
-    margin: 0 4px;
-}
-
-.nav-item:active {
-    transform: scale(0.97);
+    color: var(--hint-color);
+    cursor: pointer;
+    flex: 1;
+    transition: color 0.2s, background-color 0.2s;
+    height: 100%;
+    padding-top: 5px;
+    /* Улучшение: фон для активной вкладки */
+    background-color: var(--secondary-bg-color);
 }
 
 .nav-item.active {
@@ -195,12 +180,6 @@ body {
 
 .nav-item i {
     font-size: 22px;
-}
-
-.nav-balance-amount {
-    font-size: 18px;
-    font-weight: 700;
-    line-height: 1;
 }
 
 .nav-text-container {
@@ -225,51 +204,184 @@ body {
 
 .nav-item.active .nav-badge {
     background-color: var(--accent-color);
+    color: var(--card-bg);
 }
 
-/* Иконки навигации */
+/* === 4. ОБЩИЕ ЭЛЕМЕНТЫ: КАРТОЧКИ, КНОПКИ, ФОРМЫ === */
 
-.icon-tasks::before { content: "📋"; }
-.icon-wallet::before { content: "👛"; }
-.icon-user::before { content: "👤"; }
-.icon-transaction::before { content: "🔄"; }
-.icon-external-link::before { content: "🔗"; }
-.icon-arrow-left::before { content: "⬅️"; }
-
-.back-button .icon-arrow-left::before {
-    content: "←";
+/* КАРТОЧКИ */
+.task-card, .balance-card, .profile-details-card, .profile-header-card, .task-details-card, .form-card {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 16px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Карточки заданий и общий UI */
-
-.section-title,
-.section-title-highlight,
-.section-title-tasks {
-    font-size: 16px;
+/* КНОПКИ */
+.btn-primary, .btn-secondary, .task-start-button {
+    padding: 12px 16px;
+    border-radius: 8px;
     font-weight: 600;
-    margin: 10px 0 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, opacity 0.2s;
+    width: 100%;
+    text-align: center;
+    border: none;
+    font-size: 14px;
 }
 
-.section-title-highlight {
-    color: var(--accent-color);
+.btn-primary {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
 }
 
-.section-title-tasks {
-    margin-top: 4px;
-    margin-bottom: 8px;
+.btn-primary:hover {
+    opacity: 0.9;
 }
 
-/* Кнопка "Создать задание" */
-.create-task-block {
+.btn-secondary {
+    background-color: var(--secondary-bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-subtle);
+}
+
+.btn-secondary:hover {
+    background-color: #2b3036;
+}
+
+.balance-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+.balance-action-btn {
+    flex: 1;
+}
+
+/* ФОРМЫ */
+.input-group {
+    margin-bottom: 12px;
+    width: 100%;
+}
+
+.input-group label {
+    display: block;
+    font-size: 12px;
+    color: var(--hint-color);
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.input-group input[type="text"],
+.input-group input[type="url"],
+.input-group input[type="number"],
+.input-group textarea,
+.input-group select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+    background-color: var(--secondary-bg-color);
+    color: var(--text-color);
+    font-size: 14px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.input-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.inline-info {
+    display: flex;
+    gap: 10px;
     margin-bottom: 10px;
 }
 
-.create-task-button {
-    font-size: 15px;
-    font-weight: 600;
+.inline-info .flex-1 {
+    flex: 1;
 }
 
-/* Карточки заданий */
+/* Стили для скролла цифр возраста (имитация) */
+.small-select {
+    width: 100%;
+    text-align: center;
+    appearance: none; /* Убираем нативный стиль select */
+    -webkit-appearance: none;
+    background-position: right 8px center; /* Убираем/сдвигаем стрелку */
+    background-size: 8px;
+    padding-right: 25px; 
+}
+.small-select option {
+    text-align: left;
+}
+
+
+.form-divider {
+    border: none;
+    border-top: 1px solid var(--border-subtle);
+    margin: 15px 0;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.total-cost {
+    font-weight: 700;
+    color: var(--accent-color);
+    font-size: 16px;
+}
+
+.admin-bot-check-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--hint-color);
+}
+
+.admin-bot-info {
+    font-size: 12px;
+    color: var(--hint-color);
+    padding: 8px;
+    background-color: var(--secondary-bg-color);
+    border-radius: 6px;
+    margin-top: 10px;
+    border-left: 3px solid var(--link-color);
+}
+
+
+/* === 5. РЕНДЕРИНГ ЗАДАНИЙ (task-card) === */
+.create-task-block {
+    margin-bottom: 15px;
+}
+
+.create-task-button {
+    background-color: var(--success-color);
+    color: var(--bg-color);
+    box-shadow: 0 2px 5px rgba(102, 187, 106, 0.4);
+}
+
+.task-market-info {
+    font-size: 12px;
+    color: var(--hint-color);
+    text-align: left; /* Изменено на выравнивание по левому краю */
+    margin-bottom: 20px;
+}
+
+.tasks-count {
+    color: var(--text-color);
+    font-weight: 600;
+}
 
 .tasks-list {
     display: flex;
@@ -281,7 +393,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-left: 5px solid var(--border-subtle);
     transition: transform 0.1s;
 }
@@ -306,15 +418,12 @@ body {
 }
 
 .task-card.new-task {
-    box-shadow: 0 0 0 1px rgba(255, 213, 79, 0.5);
+    box-shadow: 0 0 10px rgba(255, 213, 79, 0.15);
 }
-
-/* Левая часть карточки */
 
 .task-info {
     flex: 1;
-    min-width: 0;
-    margin-right: 10px;
+    padding-right: 15px;
 }
 
 .task-title {
@@ -337,26 +446,39 @@ body {
     font-size: 10px;
     font-weight: 700;
     padding: 2px 6px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background-color: rgba(0, 0, 0, 0.25);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    border-radius: 4px;
+    display: inline-block;
 }
 
 .task-card.subscribe .task-type-badge {
+    background-color: var(--subscribe-border);
     color: var(--subscribe-text);
 }
-
 .task-card.comment .task-type-badge {
+    background-color: var(--comment-border);
     color: var(--comment-text);
 }
-
 .task-card.view .task-type-badge {
+    background-color: var(--view-border);
     color: var(--view-text);
 }
+
+/* Карточка на модерации */
+.moderation-card {
+    border-left-color: var(--link-color);
+    background-color: var(--secondary-bg-color);
+}
+.moderation-badge {
+    background-color: var(--border-subtle);
+    color: var(--link-color) !important;
+}
+.status-badge {
+    font-size: 12px;
+    color: var(--hint-color);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
 
 .task-meta {
     margin-top: 5px;
@@ -365,8 +487,6 @@ body {
     display: flex;
     gap: 10px;
 }
-
-/* Правая часть карточки */
 
 .task-action {
     display: flex;
@@ -381,393 +501,393 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    border-radius: 999px;
-    border: none;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity var(--transition-fast), transform 0.1s;
-    background: linear-gradient(135deg, #fbc02d, #f57f17);
-    color: #000;
-}
-
-.task-start-button:active {
-    transform: scale(0.97);
-    opacity: 0.9;
+    gap: 5px;
+    font-size: 13px;
+    background-color: var(--secondary-bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-subtle);
 }
 
 .task-start-button.subscribe {
-    background: linear-gradient(135deg, #66bb6a, #43a047);
+    background-color: var(--subscribe-text);
+    color: var(--card-bg);
 }
-
 .task-start-button.comment {
-    background: linear-gradient(135deg, #ab47bc, #8e24aa);
+    background-color: var(--comment-text);
+    color: var(--card-bg);
 }
-
 .task-start-button.view {
-    background: linear-gradient(135deg, #ffca28, #f9a825);
+    background-color: var(--view-text);
+    color: var(--card-bg);
 }
 
 .cost-badge {
-    background-color: rgba(0, 0, 0, 0.22);
-    border-radius: 999px;
-    padding: 2px 6px;
     font-weight: 700;
-    font-size: 11px;
+    margin-left: 3px;
 }
 
-/* Карточка модерации */
-
-.moderation-card {
-    background-color: #20232a;
-    border-color: #ffb74d;
-}
-
-.moderation-badge {
-    background-color: rgba(255, 183, 77, 0.15);
-    color: #ffb74d;
-}
-
-.status-badge {
-    font-size: 11px;
-    font-weight: 600;
-    color: #ffb74d;
-}
-
-/* Детали задания */
-
-.task-details-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
+/* --- Детали Задания --- */
 .task-details-card {
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius-base);
-    padding: 16px;
-    box-shadow: var(--shadow-soft);
+    padding: 20px;
+    margin-bottom: 20px;
 }
 
 .task-header {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    align-items: flex-start;
     margin-bottom: 10px;
 }
 
-.task-details-title-centered {
-    font-size: 16px;
-    font-weight: 600;
+.task-details-title {
+    font-size: 18px;
     margin: 0;
-    flex: 1;
+    font-weight: 700;
+}
+/* Центрированный заголовок для деталей (вместо title) */
+.task-details-title-centered {
+    font-size: 18px;
+    margin: 0;
+    font-weight: 700;
+    flex-grow: 1;
+    text-align: center;
 }
 
 .reward-row {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    margin: 6px 0 10px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 15px;
+    font-size: 15px;
+    font-weight: 500;
 }
 
 .reward-amount {
+    font-size: 18px;
     font-weight: 700;
     color: var(--accent-color);
 }
 
 .task-details-description {
-    font-size: 13px;
-    color: var(--hint-color);
-    margin-bottom: 12px;
+    font-size: 14px;
+    color: var(--text-color);
+    line-height: 1.4;
+    margin-bottom: 20px;
 }
 
 .link-button {
-    display: inline-flex;
-    align-items: center;
+    display: flex;
     justify-content: center;
-    gap: 6px;
-    margin-bottom: 10px;
-}
-
-.link-button i {
-    font-size: 14px;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    background-color: var(--link-color);
+    color: var(--bg-color);
 }
 
 .verification-info {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--hint-color);
-    margin-bottom: 10px;
+    padding: 15px;
+    border-left: 4px solid var(--accent-color);
+    background-color: var(--secondary-bg-color);
+    border-radius: 6px;
+    margin-bottom: 20px;
 }
 
-/* Кнопки */
-
-.btn-primary,
-.btn-secondary,
-.task-start-button {
-    border-radius: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color var(--transition-fast), opacity var(--transition-fast), transform 0.1s;
-    width: 100%;
-    text-align: center;
-    border: none;
+/* === 6. БАЛАНС (balance-card) === */
+.balance-card {
+    padding: 20px;
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, #66bb6a, #43a047);
-    color: #fff;
-}
-
-.btn-primary:active {
-    opacity: 0.9;
-    transform: scale(0.98);
-}
-
-.btn-secondary {
-    background-color: #2b3138;
-    color: var(--text-color);
-}
-
-.btn-secondary:active {
-    opacity: 0.9;
-    transform: scale(0.98);
-}
-
-/* Баланс */
-
-.balance-summary-card {
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius-base);
-    padding: 14px;
-    box-shadow: var(--shadow-soft);
-    margin-bottom: 12px;
-}
-
-.balance-row {
+.balance-item {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 6px;
-    font-size: 13px;
+    align-items: center;
+    padding: 8px 0;
 }
 
-.balance-row.ready span:last-child {
-    color: var(--success-color);
+.total-balance, .pending-balance {
+    border-bottom: 1px dashed var(--border-subtle);
+    margin-bottom: 8px;
+}
+
+.total-balance .balance-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-color); /* Общий баланс - нейтральный цвет */
+}
+
+.pending-balance .balance-value {
+    font-size: 18px;
     font-weight: 600;
+    color: var(--accent-color); /* Эскроу - акцентный цвет */
 }
 
-.balance-actions {
-    display: flex;
-    gap: 10px;
+.withdrawable-balance .balance-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--success-color); /* Готово к выводу - зеленый цвет */
 }
 
-.balance-action-btn {
+.balance-label {
     font-size: 14px;
+    color: var(--hint-color);
 }
 
-/* Транзакции */
-
+/* --- Транзакции --- */
 .transactions-list {
-    margin-top: 8px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 1px;
 }
 
-.transaction-item {
+.transaction-row {
+    display: flex;
+    align-items: center;
     background-color: var(--card-bg);
-    border-radius: var(--border-radius-base);
-    padding: 10px 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.transaction-row:first-child {
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+}
+.transaction-row:last-child {
+    border-bottom: none;
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+}
+
+
+.icon-transaction {
+    font-size: 18px;
+    color: var(--hint-color);
+    margin-right: 12px;
+}
+
+.tx-info {
+    flex-grow: 1;
+}
+
+.tx-main-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: var(--shadow-soft);
-}
-
-.transaction-main {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.transaction-icon i {
-    font-size: 20px;
-}
-
-.transaction-description {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
 }
 
-.transaction-meta {
-    font-size: 11px;
-    color: var(--hint-color);
-    display: flex;
-    gap: 8px;
-}
-
-.transaction-amount {
-    font-weight: 700;
-    font-size: 13px;
-}
-
-.tx-completed .transaction-amount {
+.tx-amount {
+    font-weight: 600;
     color: var(--success-color);
 }
-
-.tx-failed .transaction-amount {
+.tx-amount[data-sign='-'] {
     color: var(--danger-color);
 }
 
-/* Профиль */
+.tx-sub-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-top: 2px;
+    color: var(--hint-color);
+}
 
+.tx-status {
+    font-size: 11px;
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+.tx-pending {
+    border-left: 3px solid var(--accent-color);
+    padding-left: 10px;
+}
+.tx-pending .tx-status {
+    color: var(--accent-color);
+}
+.tx-completed {
+    border-left: 3px solid var(--success-color);
+    padding-left: 10px;
+}
+.tx-completed .tx-status {
+    color: var(--success-color);
+}
+.tx-failed {
+    border-left: 3px solid var(--danger-color);
+    padding-left: 10px;
+}
+.tx-failed .tx-amount {
+    color: var(--danger-color);
+}
+.tx-failed .tx-status {
+    color: var(--danger-color);
+}
+
+/* === 7. ПРОФИЛЬ (profile-menu) === */
 .profile-header-card {
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius-base);
-    padding: 12px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    box-shadow: var(--shadow-soft);
-    margin-bottom: 12px;
+    padding: 20px 16px;
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    margin-bottom: 20px;
+    border: 1px solid var(--border-subtle);
 }
 
 .profile-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 999px;
-    background: linear-gradient(135deg, #64b5f6, #1976d2);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--link-color);
+    color: var(--bg-color);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
+    font-size: 30px;
     font-weight: 700;
-    font-size: 18px;
-    color: #fff;
+    margin-right: 15px;
 }
 
-.profile-info-main {
-    display: flex;
-    flex-direction: column;
+.profile-info-main h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
 }
 
 .user-id {
     font-size: 12px;
     color: var(--hint-color);
+    display: block;
+    margin-top: 2px;
 }
 
 .profile-details-card {
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius-base);
-    padding: 12px;
-    box-shadow: var(--shadow-soft);
-    margin-bottom: 12px;
+    padding: 0 16px; 
 }
 
-.detail-row {
+.profile-details-card .detail-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 6px;
+    align-items: center;
+    padding: 12px 0;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.profile-details-card .detail-row:last-child {
+    border-bottom: none;
+}
+
+.profile-details-card .detail-row span:first-child {
+    color: var(--hint-color);
+}
+.profile-details-card .detail-row span:last-child {
+    font-weight: 600;
+}
+
+.profile-actions {
+    margin-top: 25px;
+}
+
+/* === 8. МОДАЛЬНЫЕ ОКНА === */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    padding: 25px;
+    border-radius: var(--border-radius);
+    max-width: 90%;
+    width: 350px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    transform: scale(0.95);
+    animation: modal-in 0.3s forwards ease-out;
+}
+
+@keyframes modal-in {
+    to {
+        transform: scale(1);
+    }
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.modal-content p, .modal-content ul, .modal-content ol {
     font-size: 13px;
+    color: var(--text-color);
+    line-height: 1.5;
+    margin-bottom: 15px;
 }
 
-.link-row a {
-    color: var(--link-color);
-    text-decoration: none;
+.modal-content ul, .modal-content ol {
+    margin-left: 20px;
+    padding-left: 0;
 }
 
-.link-row a:hover {
-    text-decoration: underline;
+.modal-content li {
+    margin-bottom: 5px;
+    color: var(--hint-color);
+}
+.modal-content li strong {
+    color: var(--text-color);
 }
 
-.logout-btn {
+.modal-content button {
     margin-top: 10px;
 }
 
-/* Формы создания задания */
-
-.create-task-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.form-label {
-    font-size: 13px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.form-input {
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border-subtle);
-    background-color: #111217;
-    color: var(--text-color);
-    font-size: 13px;
-}
-
-.form-input:focus {
-    outline: none;
-    border-color: var(--accent-color);
-}
-
-/* Модалка пользовательского соглашения */
-
-#modal-overlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.6);
-    z-index: 99;
-    display: none;
-}
-
-#modal-overlay.active {
-    display: block;
-}
-
-#terms-modal {
-    position: fixed;
-    inset: 50% 10% auto 10%;
-    transform: translateY(-50%);
-    background-color: var(--card-bg);
-    border-radius: var(--border-radius-base);
-    padding: 16px;
-    box-shadow: var(--shadow-soft);
-    z-index: 100;
-    display: none;
-    max-height: 70vh;
-    overflow-y: auto;
-}
-
-#terms-modal.active {
-    display: block;
-}
-
-#terms-text h2 {
-    margin-top: 0;
-}
-
-.terms-actions {
-    margin-top: 12px;
-    display: flex;
-    gap: 10px;
-}
-
-/* Мелочи */
-
-.muted-text {
+.modal-content .muted-text {
     color: var(--hint-color);
-    font-size: 12px;
+    font-style: italic;
 }
 
-/* Scrollbar кастомизация */
-#main-content::-webkit-scrollbar {
-    width: 4px;
+/* --- ИКОНКИ (простая реализация) --- */
+/* Используем простые символы или псевдоэлементы для имитации иконок */
+[class^="icon-"], [class*=" icon-"] {
+    /* Базовый стиль */
+    font-style: normal;
+    font-weight: normal;
+    display: inline-block;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
-#main-content::-webkit-scrollbar-thumb {
-    background-color: #3a3f45;
-    border-radius: 999px;
+/* Задания */
+.icon-tasks::before { content: "🎯"; }
+/* Баланс */
+.icon-wallet::before { content: "💰"; }
+/* Профиль */
+.icon-user::before { content: "👤"; }
+/* Транзакция */
+.icon-transaction::before { content: "🔄"; }
+/* Внешняя ссылка */
+.icon-external-link::before { content: "🔗"; }
+/* Стрелка назад */
+.icon-arrow-left::before { content: "⬅️"; }
+
+/* Уберем иконку стрелки для кнопок, где она не нужна или замещена */
+.back-button .icon-arrow-left::before {
+    content: "←"; /* Более чистый символ */
 }
