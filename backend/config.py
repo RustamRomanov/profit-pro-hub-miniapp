@@ -1,6 +1,3 @@
-# config.py
-
-
 # Токен ОСНОВНОГО бота (Mini App)
 BOT_TOKEN = '8599127318:AAG5tc6pya5xFiUZuNpgCW41uAhFyl5ANsY'
 
@@ -16,5 +13,5 @@ PROJECT_NAME = "Profit Pro Hub"
 PROJECT_LINK = "https://t.me/Profitprohub_bot"
 
 # URL Mini App (GitHub Pages или другой хостинг)
-MINI_APP_URL = "https://rustamromanov.github.io/profit-pro-hub-webapp/miniapp-build/"
-
+# ИСПРАВЛЕНО: удалена лишняя папка /miniapp-build/ и исправлено имя репозитория
+MINI_APP_URL = "https://rustamromanov.github.io/profit-pro-hub-miniapp/"
