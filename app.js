@@ -38,80 +38,138 @@ document.addEventListener('DOMContentLoaded', () => {
     const FORBIDDEN_WORDS = ['мат', 'агрессия', 'порно', 'наркотики', 'мошенничество'];
 
     const COUNTRIES = [
-        'Россия', 'Украина', 'Казахстан', 'Беларусь', 'Узбекистан', 'Армения',
-        'Грузия', 'Азербайджан', 'Молдова', 'Кыргызстан', 'Таджикистан',
-        'Туркменистан', 'Латвия', 'Литва', 'Эстония'
-    ].sort();
-
-    // mock-данные
-    const mockTasks = [
-        { id: 101, type: 'subscribe', title: 'Подписаться на новостной канал', description: 'Подпишитесь на наш канал о технологиях.', cost: 0.50, reward: '0.50 ⭐️', available: 500, link: 'https://t.me/examplechannel', isNew: true },
-        { id: 102, type: 'comment', title: 'Оставить комментарий', description: 'Напишите осмысленный комментарий под постом.', cost: 0.85, reward: '0.85 ⭐️', available: 150, link: 'https://t.me/examplepost', isNew: true },
-        { id: 103, type: 'view', title: 'Просмотреть пост', description: 'Просмотр и лайк поста о финансах.', cost: 0.25, reward: '0.25 ⭐️', available: 1200, link: 'https://t.me/exampleview', isNew: false },
-        { id: 104, type: 'subscribe', title: 'Подписка на канал с мемами', description: 'Вступить в группу и продержаться 7 дней.', cost: 0.60, reward: '0.60 ⭐️', available: 800, link: 'https://t.me/memechannel', isNew: false },
-        { id: 105, type: 'comment', title: 'Отзыв о продукте', description: 'Написать честный отзыв на канале-партнере.', cost: 1.10, reward: '1.10 ⭐️', available: 50, link: 'https://t.me/productreview', isNew: false },
-        { id: 106, type: 'view', title: 'Оценить новый клип', description: 'Просмотр видео и реакция.', cost: 0.30, reward: '0.30 ⭐️', available: 2000, link: 'https://t.me/newclip', isNew: false },
-    ];
-    // Задания создателя - только на модерации
-    const mockOwnerTasks = [
-        { id: 201, type: 'subscribe', title: 'Моя задача: Подписка (На модерации)', description: 'Тестовая задача, созданная мной, ожидает проверки.', cost: 0.50, reward: '0.50 ⭐️', status: 'moderation', available: 0, link: 'https://t.me/mytestchannel', isNew: false },
-    ];
-    let currentTask = null;
-    let currentScreen = 'worker-tasks-container';
-    let availableTasksCount = mockTasks.length + 1250; // Симулируемое общее количество заданий
-
-    const mockTransactions = [
-        { id: 1, type: 'task_pending', amount: -10.0, date: '2025-10-20', status: 'pending', description: 'Задание #123 (7-дней Эскроу)', relatedId: 123 },
-        { id: 2, type: 'task_completed', amount: 0.50, date: '2025-10-18', status: 'completed', description: 'Задание #456: Подписка', relatedId: 456 },
-        { id: 3, type: 'deposit', amount: 100.0, date: '2025-10-15', status: 'completed', description: 'Пополнение через Payeer', relatedId: 0 },
-        { id: 4, type: 'withdrawal', amount: -25.0, date: '2025-10-12', status: 'completed', description: 'Вывод на Qiwi', relatedId: 0 },
+        'Россия', 'Беларусь', 'Казахстан', 'Украина', 'Узбекистан', 'Киргизия',
+        'Таджикистан', 'Грузия', 'Армения', 'Азербайджан', 'Молдова'
     ];
 
-    // --- Утилиты ---
-    const getEl = (id) => document.getElementById(id);
-    const setScreen = (screenId) => {
-        // Скрываем все контейнеры
-        ['worker-tasks-container', 'task-details-container', 'create-task-container', 'balance-menu-container', 'profile-menu-container'].forEach(id => {
-            getEl(id).style.display = 'none';
-        });
-        // Показываем нужный
-        getEl(screenId).style.display = 'block';
-        currentScreen = screenId;
-
-        // Обновляем навигацию и хедер
-        renderBottomNav();
-
-        // Задаем заголовок в зависимости от экрана
-        let headerTitle = 'Profit Pro Hub';
-        if (screenId === 'task-details-container') headerTitle = 'Детали задания';
-        else if (screenId === 'create-task-container') headerTitle = 'Создание задания';
-        else if (screenId === 'balance-menu-container') headerTitle = 'Баланс';
-        else if (screenId === 'profile-menu-container') headerTitle = 'Профиль';
-
-        renderGlobalHeader(headerTitle);
-
-        // Устанавливаем BackButton для Telegram WebApp, если он не на главном экране
-        if (tg) {
-            if (screenId !== 'worker-tasks-container') {
-                tg.BackButton.show();
-                tg.BackButton.onClick(() => setScreen('worker-tasks-container'));
-            } else {
-                tg.BackButton.hide();
-            }
+    // Моки задач исполнителя
+    let mockTasks = [
+        {
+            id: 1,
+            type: 'subscribe', // подписка
+            title: 'Подписаться на новостной канал',
+            description: 'Подпишитесь на наш канал о технологиях.',
+            reward: 0.5,
+            available: 500,
+            status: 'available',
+            link: 'https://t.me/example_channel_1',
+            isNew: true
+        },
+        {
+            id: 2,
+            type: 'comment',
+            title: 'Оставить осмысленный комментарий',
+            description: 'Напишите осмысленный комментарий под постом.',
+            reward: 0.85,
+            available: 150,
+            status: 'available',
+            link: 'https://t.me/example_post_1',
+            isNew: false
+        },
+        {
+            id: 3,
+            type: 'view',
+            title: 'Посмотреть ролик до конца',
+            description: 'Посмотрите видео до конца, не перематывая.',
+            reward: 0.3,
+            available: 300,
+            status: 'available',
+            link: 'https://t.me/example_video_1',
+            isNew: false
         }
-    };
-    const showModal = (id) => getEl(id).style.display = 'flex';
-    const hideModal = (id) => getEl(id).style.display = 'none';
+    ];
 
-    // Функция для усечения имени (до 8 символов)
+    // Моки задач создателя (на модерации)
+    let mockOwnerTasks = [
+        {
+            id: 101,
+            type: 'subscribe',
+            title: 'Моя задача: Подписка (На модерации)',
+            description: 'Тестовая задача, созданная мной, ожидает проверки.',
+            reward: 0.75,
+            available: 100,
+            status: 'moderation',
+            link: 'https://t.me/my_channel'
+        }
+    ];
+
+    // Моки транзакций
+    let mockTransactions = [
+        {
+            id: 1,
+            type: 'task',
+            description: 'Задание #123 (7-дней Эскроу)',
+            date: '2025-10-20',
+            amount: -10.00,
+            status: 'pending'
+        },
+        {
+            id: 2,
+            type: 'task',
+            description: 'Задание #456: Подписка',
+            date: '2025-10-18',
+            amount: 0.50,
+            status: 'completed'
+        },
+        {
+            id: 3,
+            type: 'deposit',
+            description: 'Пополнение через Payeer',
+            date: '2025-10-15',
+            amount: 100.00,
+            status: 'completed'
+        },
+        {
+            id: 4,
+            type: 'withdraw',
+            description: 'Вывод на Qiwi',
+            date: '2025-10-12',
+            amount: -25.00,
+            status: 'completed'
+        }
+    ];
+
+    // Подсчет количества доступных задач
+    const availableTasksCount = mockTasks.reduce((acc, task) => acc + (task.available || 0), 0);
+
+    // Текущий экран
+    let currentScreen = 'worker-tasks-container';
+    let currentTask = null;
+
+    // === Утилиты DOM ===
+    const getEl = (id) => document.getElementById(id);
+    const qs = (selector) => document.querySelector(selector);
+
+    // Удобная функция для переключения экранов
+    const setScreen = (screenId) => {
+        currentScreen = screenId;
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.classList.toggle('active', screen.id === screenId);
+        });
+
+        // Скрываем/показываем нижнее меню в зависимости от экрана
+        const bottomNav = getEl('bottom-nav-bar');
+        if (!bottomNav) return;
+
+        // Нижнее меню прячем только для экранов подробностей и создания задачи
+        if (screenId === 'task-details-container' || screenId === 'create-task-container') {
+            bottomNav.style.display = 'none';
+        } else {
+            bottomNav.style.display = 'flex';
+        }
+
+        // Обновляем навигацию (активное состояние)
+        renderBottomNav();
+    };
+
+    // Усекаем длинные имена
     const truncateName = (name) => {
-        if (name.length > 8) {
+        if (!name) return '';
+        if (name.length > 10) {
             return name.substring(0, 8) + '...';
         }
         return name;
     };
-
-    // --- Рендеринг Компонентов ---
 
     // 1. Рендеринг Нижней Навигации (Bottom Bar)
     const renderBottomNav = () => {
@@ -120,22 +178,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const navItems = [
             { id: 'worker-tasks-container', icon: 'tasks', text: 'Задания', screen: 'worker-tasks-container' },
-            { id: 'balance-menu-container', icon: 'wallet', text: 'Баланс', screen: 'balance-menu-container', badge: `${currentUserData.balance.toFixed(2)}` },
-            { id: 'profile-menu-container', icon: 'user', text: 'Профиль', screen: 'profile-menu-container', badge: truncateName(currentUserData.name) },
+            {
+                id: 'balance-menu-container',
+                icon: 'wallet',
+                text: 'Баланс',
+                screen: 'balance-menu-container',
+                // Если баланс больше нуля — показываем сумму вместо иконки
+                showBalanceInsteadOfIcon: currentUserData.balance > 0,
+                balanceText: currentUserData.balance.toFixed(2)
+            },
+            {
+                id: 'profile-menu-container',
+                icon: 'user',
+                text: 'Профиль',
+                screen: 'profile-menu-container',
+                // Имя пользователя внизу не показываем
+                badge: null
+            },
         ];
 
-        nav.innerHTML = navItems.map(item => `
-            <div
-                class="nav-item ${currentScreen === item.id ? 'active' : ''}"
-                data-screen="${item.screen}"
-            >
-                <i class="icon-${item.icon}"></i>
-                <div class="nav-text-container">
-                    <span class="nav-text">${item.text}</span>
-                    <span class="nav-badge">${item.badge || ''}</span>
+        nav.innerHTML = navItems.map((item) => {
+            const isBalanceAmount = item.id === 'balance-menu-container' && item.showBalanceInsteadOfIcon;
+
+            const iconHtml = isBalanceAmount
+                ? `<div class="nav-balance-amount">${item.balanceText}</div>`
+                : `<i class="icon-${item.icon}"></i>`;
+
+            const badgeHtml = item.badge
+                ? `<span class="nav-badge">${item.badge}</span>`
+                : '';
+
+            return `
+                <div
+                    class="nav-item ${currentScreen === item.id ? 'active' : ''}"
+                    data-screen="${item.screen}"
+                >
+                    ${iconHtml}
+                    <div class="nav-text-container">
+                        <span class="nav-text">${item.text}</span>
+                        ${badgeHtml}
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 
         nav.querySelectorAll('.nav-item').forEach(item => {
             item.onclick = () => {
@@ -149,16 +234,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // 2. Рендеринг Хедера (Заголовок удален для экранов, кроме главного)
-    const renderGlobalHeader = (title) => {
-        const header = getEl('global-header-bar');
+    // 2. Рендеринг Хедера
+    const renderGlobalHeader = (title = '') => {
+        const header = getEl('global-header');
+        if (!header) return;
+
+        let backButtonHtml = '';
         const isMainScreen = currentScreen === 'worker-tasks-container';
-        
-        // Кнопка "Назад" теперь управляется функцией setScreen и tg.BackButton
-        // Нам не нужно рисовать ее вручную в HTML для экранов task-details и create-task
-        const backButtonHtml = !isMainScreen && !tg ? 
-            `<button class="back-button" id="back-to-tasks"><i class="icon-arrow-left"></i></button>` : 
-            ''; // Используем только для отладки, в Telegram лучше использовать нативную кнопку
+
+        if (!isMainScreen) {
+            backButtonHtml = `
+                <button id="back-to-tasks" class="back-button">
+                    <i class="icon-arrow-left"></i>
+                </button>
+            `;
+        }
 
         // На главном экране (worker-tasks-container) заголовок должен быть убран.
         // На экранах task-details и create-task заголовок должен быть убран.
@@ -177,18 +267,34 @@ document.addEventListener('DOMContentLoaded', () => {
             ${backButtonHtml}
         `;
 
-        // Для отладочной кнопки "Назад"
-        if (!isMainScreen && !tg) {
-            getEl('back-to-tasks').onclick = () => setScreen('worker-tasks-container');
+        if (!isMainScreen) {
+            const backButton = getEl('back-to-tasks');
+            if (backButton) {
+                backButton.onclick = () => {
+                    setScreen('worker-tasks-container');
+                    renderGlobalHeader('');
+                    if (tg && tg.BackButton) tg.BackButton.hide();
+                };
+            }
+
+            if (tg && tg.BackButton) {
+                tg.BackButton.show();
+                tg.BackButton.onClick(() => {
+                    setScreen('worker-tasks-container');
+                    renderGlobalHeader('');
+                    tg.BackButton.hide();
+                });
+            }
+        } else {
+            if (tg && tg.BackButton) tg.BackButton.hide();
         }
     };
 
-
     // 3. Рендеринг Карточки Задания
     const renderTaskCard = (task) => {
-        let typeClass = task.type === 'subscribe' ? 'subscribe' : task.type === 'comment' ? 'comment' : 'view';
+        const typeClass = task.type === 'subscribe' ? 'subscribe' : task.type === 'comment' ? 'comment' : 'view';
 
-        // Задания создателя на модерации
+        // Для заданий создателя на модерации оставляем текущий вид
         if (task.status === 'moderation') {
             return `
                  <div class="task-card moderation-card" data-task-id="${task.id}">
@@ -203,23 +309,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
         }
-        
-        // Формируем большую и привлекательную кнопку "Начать"
+
+        // Текст и иконка типа задания
+        let typeText = '';
+        let typeIcon = '';
+
+        if (task.type === 'subscribe') {
+            typeText = 'Подписка';
+            typeIcon = '🔔';
+        } else if (task.type === 'comment') {
+            typeText = 'Комментарий';
+            typeIcon = '💬';
+        } else {
+            typeText = 'Просмотр';
+            typeIcon = '👁';
+        }
+
+        // Кнопка с наградой
         const startButton = `
             <button class="task-start-button ${typeClass}" data-task-id="${task.id}">
-                Начать <span class="cost-badge">${task.reward}</span>
+                Награда <span class="cost-badge">${task.reward} ⭐</span>
             </button>
         `;
 
         return `
             <div class="task-card ${typeClass} ${task.isNew ? 'new-task' : ''}" data-task-id="${task.id}">
                 <div class="task-info">
-                    <span class="task-type-badge ${typeClass}">${task.type === 'subscribe' ? 'Подписка' : task.type === 'comment' ? 'Комментарий' : 'Просмотр'}</span>
+                    <span class="task-type-badge ${typeClass}">${typeIcon} ${typeText}</span>
                     <h4 class="task-title">${task.title}</h4>
-                    <p class="task-description">${task.description}</p>
                     <div class="task-meta">
-                        <span class="task-meta-item">Доступно: ${task.available}</span>
-                        <span class="task-meta-item">Награда: ${task.reward}</span>
+                        <span class="task-meta-item">Осталось: ${task.available}</span>
                     </div>
                 </div>
                 <div class="task-action">
@@ -228,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     };
-    
+
     // 4. Рендеринг Деталей Задания (С ИНТЕГРАЦИЕЙ start_perform_task)
     const renderTaskDetails = (task) => {
         // Заголовок в хедере убран согласно запросу (renderGlobalHeader)
@@ -238,11 +357,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const typeText = task.type === 'subscribe' ? 'Подписка' : task.type === 'comment' ? 'Комментарий' : 'Просмотр';
         const typeClass = task.type === 'subscribe' ? 'subscribe' : task.type === 'comment' ? 'comment' : 'view';
         
-        // Извлекаем числовое значение стоимости
-        const costValue = parseFloat(task.reward.replace(' ⭐️', '')) || 0;
+        const costValue = task.reward;
 
         container.innerHTML = `
-            <div class="screen-content-padding">
+            <div class="screen-content-padding task-details-wrapper">
                 <div class="task-details-card ${typeClass}">
                     <div class="task-header">
                         <h2 class="task-details-title-centered">${task.title}</h2>
@@ -263,7 +381,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         Для заданий на подписку, оплата поступит на Эскроу и будет доступна через 7 дней.
                     </p>
 
-                    <button id="btn-complete-task" class="btn-primary" data-task-id="${task.id}" data-task-type="${task.type}" data-price="${costValue}">
+                    <button id="btn-complete-task" class="btn-primary"
+                        data-task-id="${task.id}" data-task-type="${task.type}" data-price="${costValue}">
                         Готово (Проверить выполнение)
                     </button>
                 </div>
@@ -289,10 +408,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             // ------------------------------------------
 
-            // После отправки данных, возвращаемся к списку заданий
+            // Возврат на список заданий
             setScreen('worker-tasks-container');
-            // Если используем нативную кнопку, нужно это убрать, 
-            // так как она вернется сама, но для консистентности:
+            renderWorkerTasks();
+            renderGlobalHeader('');
             if (tg && tg.BackButton) tg.BackButton.hide();
         };
     };
@@ -313,12 +432,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         
-        // Блок с количеством заданий на рынке
-        const taskMarketInfo = `
-            <div class="task-market-info">
-                Всего заданий на рынке: <span class="tasks-count">${availableTasksCount}</span>
-            </div>
-        `;
+        // Блок с количеством заданий на рынке убран по ТЗ
+        const taskMarketInfo = '';
 
         // Объединяем задачи пользователя на модерации и общие задачи
         // Показываем задачи создателя, только если они на модерации (т.е. в mockOwnerTasks)
@@ -327,13 +442,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Задания создателя (На модерации)
         const ownerTasksHtml = mockOwnerTasks.length > 0 ? `
             <div class="owner-tasks-section">
-                <h3 class="section-title-highlight">Ваши задания (На модерации)</h3>
                 <div class="tasks-list">
                     ${mockOwnerTasks.filter(t => t.status === 'moderation').map(task => renderTaskCard(task)).join('')}
                 </div>
             </div>
         ` : '';
-
 
         // Основные задания
         const mainTasksHtml = mockTasks.map(task => renderTaskCard(task)).join('');
@@ -341,8 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
         container.innerHTML = `
             <div class="screen-content-padding">
                 ${createTaskButton}
-                <h3 class="section-title-tasks">Задания</h3>
-                ${taskMarketInfo}
+                <h3 class="section-title-tasks">Биржа заданий</h3>
                 ${ownerTasksHtml}
                 <div class="tasks-list">
                     ${mainTasksHtml}
@@ -358,215 +470,116 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderTaskDetails(currentTask);
             };
         });
-        
-        getEl('btn-show-create-task').onclick = () => {
-            renderCreateTask();
-        };
+
+        // Обработчик для кнопки "Создать задание"
+        const createTaskBtn = getEl('btn-show-create-task');
+        if (createTaskBtn) {
+            createTaskBtn.onclick = () => {
+                setScreen('create-task-container');
+                renderCreateTaskForm();
+                renderGlobalHeader('Создать задание');
+            };
+        }
     };
-    
-    // 6. Рендеринг Создания Задания (Customer/Owner) (С ИНТЕГРАЦИЕЙ create_task)
-    const renderCreateTask = () => {
-        // Заголовок в хедере убран согласно запросу (renderGlobalHeader)
-        setScreen('create-task-container');
 
+    // 6. Рендеринг экрана создания задания
+    const renderCreateTaskForm = () => {
         const container = getEl('create-task-container');
-        
-        // Функция для динамического отображения поля Описания
-        const renderDescriptionField = (type) => {
-            return (type === 'comment' || type === 'subscribe') ? `
-                <div class="input-group">
-                    <label for="task-description">Описание задания</label>
-                    <textarea id="task-description" placeholder="Подробно опишите, что нужно сделать (например, 'Написать 5-7 слов про то, как вам понравился канал')."></textarea>
-                </div>
-            ` : '';
-        };
-        
-        // Массив опций для скролла возраста (имитация)
-        const ageOptions = (min, max) => {
-            let options = '';
-            for (let i = min; i <= max; i++) {
-                options += `<option value="${i}">${i}</option>`;
-            }
-            return options;
-        };
-
+        if (!container) return;
 
         container.innerHTML = `
             <div class="screen-content-padding">
-                <div class="form-card">
-                    <div class="input-group">
-                        <label>Тип задания</label>
-                        <select id="task-type">
-                            <option value="subscribe">Подписка на канал/чат</option>
-                            <option value="view">Просмотр поста/реакция</option>
+                <h2 class="section-title">Создать задание</h2>
+                <form id="create-task-form" class="create-task-form">
+                    <label class="form-label">
+                        Тип задания
+                        <select id="task-type" class="form-input">
+                            <option value="subscribe">Подписка на канал</option>
                             <option value="comment">Комментарий к посту</option>
+                            <option value="view">Просмотр контента</option>
                         </select>
-                    </div>
-                    
-                    <div id="description-field-container">
-                        ${renderDescriptionField('subscribe')}
-                    </div>
+                    </label>
 
-                    <div class="input-group">
-                        <label for="task-link">Ссылка на канал/пост</label>
-                        <input type="url" id="task-link" placeholder="https://t.me/" value="https://t.me/" />
-                    </div>
-                    
-                    <hr class="form-divider" />
+                    <label class="form-label">
+                        Название задания
+                        <input id="task-title" type="text" class="form-input" placeholder="Например: Подписаться на канал о крипте" />
+                    </label>
 
-                    <div class="inline-info">
-                        <div class="input-group flex-1">
-                            <label for="target-country">Целевая аудитория</label>
-                            <select id="target-country">
-                                <option value="any">Любая страна</option>
-                                ${COUNTRIES.map(c => `<option value="${c}">${c}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="input-group flex-1">
-                            <label for="target-gender">Пол</label>
-                            <select id="target-gender">
-                                <option value="any">Любой</option>
-                                <option value="M">Мужской</option>
-                                <option value="F">Женский</option>
-                            </select>
-                        </div>
-                    </div>
+                    <label class="form-label">
+                        Описание задания
+                        <textarea id="task-description" class="form-input" placeholder="Опишите, что нужно сделать"></textarea>
+                    </label>
 
-                    <div class="inline-info">
-                        <div class="input-group flex-1">
-                            <label for="target-age-min">Возраст от</label>
-                            <select id="target-age-min" class="small-select">
-                                ${ageOptions(16, 99)}
-                            </select>
-                        </div>
-                        <div class="input-group flex-1">
-                            <label for="target-age-max">Возраст до</label>
-                            <select id="target-age-max" class="small-select">
-                                ${ageOptions(16, 99)}
-                            </select>
-                        </div>
-                    </div>
+                    <label class="form-label">
+                        Ссылка
+                        <input id="task-link" type="url" class="form-input" placeholder="https://t.me/..." />
+                    </label>
 
-                    <hr class="form-divider" />
-                    
-                    <div class="inline-info">
-                        <div class="input-group flex-1">
-                            <label for="task-cost">Стоимость выполнения (⭐️)</label>
-                            <input type="number" id="task-cost" min="0.10" step="0.05" value="0.50" />
-                        </div>
-                        <div class="input-group flex-1">
-                            <label for="task-quantity">Количество выполнений</label>
-                            <input type="number" id="task-quantity" min="10" value="100" />
-                        </div>
-                    </div>
+                    <label class="form-label">
+                        Награда за выполнение (звезд)
+                        <input id="task-reward" type="number" min="0.01" step="0.01" class="form-input" placeholder="0.50" />
+                    </label>
 
-                    <div class="total-row">
-                        <span>Итого Бюджет:</span>
-                        <span id="total-cost" class="total-cost">50.00 ⭐️</span>
-                    </div>
-                    
-                    <hr class="form-divider" />
+                    <label class="form-label">
+                        Количество доступных выполнений
+                        <input id="task-available" type="number" min="1" step="1" class="form-input" placeholder="100" />
+                    </label>
 
-                    <div class="admin-bot-check-row">
-                        <input type="checkbox" id="admin-bot-checked" />
-                        <label for="admin-bot-checked">
-                            Я установил(а) админ-бота в этот канал. <a href="#" id="show-admin-modal-link">(Инструкция)</a>
-                        </label>
-                    </div>
-                    
-                    <div class="admin-bot-info">
-                        Для проверки заданий: ${BOT_USERNAME}
-                    </div>
-
-                    <button id="btn-submit-task" class="btn-primary" style="margin-top: 20px;">
-                        Оплатить и запустить задание
+                    <button type="submit" class="btn-primary">
+                        Отправить на модерацию
                     </button>
-                </div>
+                </form>
             </div>
         `;
-        
-        // Обработчики динамического рендеринга
-        const taskTypeSelect = getEl('task-type');
-        const descriptionContainer = getEl('description-field-container');
-        const totalCostEl = getEl('total-cost');
-        const costInput = getEl('task-cost');
-        const quantityInput = getEl('task-quantity');
-        const linkInput = getEl('task-link');
 
-        const updateBudget = () => {
-            const cost = parseFloat(costInput.value) || 0;
-            const quantity = parseInt(quantityInput.value) || 0;
-            const total = cost * quantity;
-            totalCostEl.textContent = `${total.toFixed(2)} ⭐️`;
-        };
-        
-        taskTypeSelect.onchange = () => {
-            descriptionContainer.innerHTML = renderDescriptionField(taskTypeSelect.value);
-            updateBudget();
-        };
-        costInput.oninput = updateBudget;
-        quantityInput.oninput = updateBudget;
-        updateBudget(); // Инициализация
-        
-        getEl('show-admin-modal-link').onclick = (e) => {
+        const form = getEl('create-task-form');
+        form.onsubmit = (e) => {
             e.preventDefault();
-            showModal('admin-bot-modal');
-        };
 
-        getEl('btn-submit-task').onclick = () => {
-            const total = parseFloat(totalCostEl.textContent);
-            const taskType = taskTypeSelect.value;
-            const link = linkInput.value.trim();
-            const description = taskType !== 'view' ? (getEl('task-description')?.value || '').trim() : '';
-            const cost = parseFloat(costInput.value);
-            const count = parseInt(quantityInput.value);
-            const title = `Задание: ${taskTypeSelect.options[taskTypeSelect.selectedIndex].text} (#${Math.floor(Math.random() * 9000) + 1000})`; // Авто-заголовок
-            
-            if (total <= 0) {
-                if (tg && tg.showAlert) tg.showAlert('Общий бюджет должен быть больше нуля.');
+            const type = getEl('task-type').value;
+            const title = getEl('task-title').value.trim();
+            const description = getEl('task-description').value.trim();
+            const link = getEl('task-link').value.trim();
+            const reward = parseFloat(getEl('task-reward').value);
+            const available = parseInt(getEl('task-available').value);
+
+            if (!title || !description || !link || !reward || !available) {
+                if (tg && tg.showAlert) tg.showAlert('Пожалуйста, заполните все поля.');
                 return;
             }
-            if (link.length < 10) {
-                 if (tg && tg.showAlert) tg.showAlert('Введите корректную ссылку на канал/пост.');
-                 return;
-            }
-            if (total > currentUserData.balance) {
-                if (tg && tg.showAlert) tg.showAlert('Недостаточно средств на балансе. Пополните счет.');
-                return;
-            }
-            if ((taskType === 'subscribe' || taskType === 'comment') && !getEl('admin-bot-checked').checked) {
-                 if (tg && tg.showAlert) tg.showAlert('Для заданий на подписку и комментарии необходимо установить админ-бота.');
-                 return;
-            }
 
-            // --- ИНТЕГРАЦИЯ: Отправка данных боту ---
-             if (tg && tg.showConfirm) {
-                tg.showConfirm(`Вы действительно хотите потратить ${total.toFixed(2)} ⭐️ на создание задания?`, (confirmed) => {
-                    if (confirmed) {
-                        // Отправляем все данные для создания задания
-                        tg.sendData(JSON.stringify({
-                            action: 'create_task',
-                            title: title,
-                            description: description,
-                            link: link,
-                            price: cost,
-                            count: count,
-                            total: total,
-                            taskType: taskType,
-                            status: 'Запущено'
-                        }));
-                        
-                        // Имитация локального обновления баланса
-                        currentUserData.balance -= total;
-                        
-                         if (tg && tg.showAlert) tg.showAlert('Задание отправлено! Бот пришлет подтверждение.');
-                         setScreen('worker-tasks-container');
-                    }
-                });
+            // Отправляем данные в админ-бота
+            if (tg && tg.sendData) {
+                tg.sendData(JSON.stringify({
+                    action: 'create_task',
+                    type,
+                    title,
+                    description,
+                    link,
+                    reward,
+                    available
+                }));
+                if (tg.showAlert) tg.showAlert('Задание отправлено на модерацию администратору.');
             } else {
-                 if (tg && tg.showAlert) tg.showAlert('[Отладка] Задание отправлено на модерацию!');
-                 setScreen('worker-tasks-container');
+                if (tg && tg.showAlert) tg.showAlert('[Отладка] Задание создано локально.');
             }
+
+            // Добавляем задачу в mockOwnerTasks (локально, для наглядности)
+            const newTaskId = mockOwnerTasks.length ? mockOwnerTasks[mockOwnerTasks.length - 1].id + 1 : 100;
+            mockOwnerTasks.push({
+                id: newTaskId,
+                type,
+                title,
+                description,
+                reward,
+                available,
+                status: 'moderation',
+                link
+            });
+
+            setScreen('worker-tasks-container');
+            renderWorkerTasks();
+            renderGlobalHeader('');
         };
     };
 
@@ -587,40 +600,43 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusClass = isCompleted ? 'tx-completed' : isFailed ? 'tx-failed' : 'tx-pending';
 
             return `
-                <div class="transaction-row ${statusClass}">
-                    <i class="icon-transaction"></i>
-                    <div class="tx-info">
-                        <div class="tx-main-row">
-                            <span class="tx-description">${tx.description}</span>
-                            <span class="tx-amount">${sign}${tx.amount.toFixed(2)} ⭐️</span>
+                <div class="transaction-item ${statusClass}">
+                    <div class="transaction-main">
+                        <div class="transaction-icon">
+                            <i class="icon-transaction"></i>
                         </div>
-                        <div class="tx-sub-row">
-                            <span>${tx.date}</span>
-                            <span class="tx-status">${statusText}</span>
+                        <div class="transaction-info">
+                            <div class="transaction-description">${tx.description}</div>
+                            <div class="transaction-meta">
+                                <span class="transaction-status">${statusText}</span>
+                                <span class="transaction-date">${tx.date}</span>
+                            </div>
                         </div>
+                    </div>
+                    <div class="transaction-amount">
+                        ${sign}${Math.abs(tx.amount).toFixed(2)} ⭐
                     </div>
                 </div>
             `;
         }).join('');
 
-
         container.innerHTML = `
             <div class="screen-content-padding">
-                <div class="balance-card">
-                    <div class="balance-item total-balance">
-                        <span class="balance-label">Общий баланс:</span>
-                        <span class="balance-value total-balance-value">${currentUserData.balance.toFixed(2)} ⭐️</span>
+                <div class="balance-summary-card">
+                    <div class="balance-row">
+                        <span>Общий баланс:</span>
+                        <span>${currentUserData.balance.toFixed(2)} ⭐</span>
                     </div>
-                    <div class="balance-item pending-balance">
-                        <span class="balance-label">Ожидание поступлений (в Эскроу):</span>
-                        <span class="balance-value pending-balance-value">${currentUserData.pending_balance.toFixed(2)} ⭐️</span>
+                    <div class="balance-row">
+                        <span>Ожидание поступлений (в Эскроу):</span>
+                        <span>${currentUserData.pending_balance.toFixed(2)} ⭐</span>
                     </div>
-                    <div class="balance-item withdrawable-balance">
-                        <span class="balance-label">Готово к выводу:</span>
-                        <span class="balance-value withdrawable-balance-value">${withdrawableBalance.toFixed(2) < 0 ? '0.00' : withdrawableBalance.toFixed(2)} ⭐️</span>
+                    <div class="balance-row ready">
+                        <span>Готово к выводу:</span>
+                        <span>${withdrawableBalance.toFixed(2)} ⭐</span>
                     </div>
                 </div>
-                
+
                 <div class="balance-actions">
                     <button id="btn-deposit" class="btn-primary balance-action-btn">
                         Пополнить
@@ -638,10 +654,10 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         
         getEl('btn-deposit').onclick = () => {
-            if (tg && tg.showAlert) tg.showAlert('Переход к пополнению баланса. (Функция в разработке)');
+            if (tg && tg.showAlert) tg.showAlert('Функция пополнения будет доступна позже.');
         };
         getEl('btn-withdraw').onclick = () => {
-            if (tg && tg.showAlert) tg.showAlert('Переход к выводу средств. (Функция в разработке)');
+            if (tg && tg.showAlert) tg.showAlert('Функция вывода будет доступна позже.');
         };
     };
 
@@ -659,7 +675,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="profile-header-card">
                     <div class="profile-avatar">${currentUserData.name[0]}</div>
                     <div class="profile-info-main">
-                        <h2>${currentUserData.name}</h2>
                         <span class="user-id">ID: ${currentUserData.id}</span>
                     </div>
                 </div>
@@ -688,86 +703,61 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
 
-                <div class="profile-actions">
-                    <button id="btn-logout" class="btn-secondary">Выйти</button>
-                </div>
+                <button id="btn-logout" class="btn-secondary logout-btn">
+                    Выйти
+                </button>
             </div>
         `;
-        
+
         getEl('link-show-terms').onclick = (e) => {
             e.preventDefault();
-            showModal('terms-modal');
+            showTermsModal();
         };
+
         getEl('btn-logout').onclick = () => {
-            if (tg && tg.showConfirm) {
-                tg.showConfirm('Вы уверены, что хотите выйти?', (confirmed) => {
-                    if (confirmed) {
-                        if (tg && tg.close) tg.close();
-                    }
-                });
-            }
+            if (tg && tg.close) tg.close();
         };
     };
 
-    // --- Инициализация Модальных Окон ---
+    // 9. Модалка пользовательского соглашения
+    const showTermsModal = () => {
+        const modal = getEl('terms-modal');
+        const overlay = getEl('modal-overlay');
+        if (!modal || !overlay) return;
 
-    // Модальное окно соглашения (С ИНТЕГРАЦИЕЙ accept_agreement)
-    const btnTermsOk = getEl('modal-accept-terms');
-    if (btnTermsOk) {
-        btnTermsOk.onclick = () => {
-            hideModal('terms-modal');
-            
-            // --- ИНТЕГРАЦИЯ: Отправляем данные боту ---
-            if (tg && tg.sendData) {
-                tg.sendData(JSON.stringify({
-                    action: 'accept_agreement', // Используем action из backend/api_routes.py
-                    status: true
-                }));
-                
-                // Локально обновляем статус
-                currentUserData.isTermsAccepted = true;
-                
-                if (tg.showAlert) tg.showAlert('Условия приняты. Бот подтвердит запись в БД.');
-            } else {
-                // Режим отладки (вне Telegram)
-                currentUserData.isTermsAccepted = true;
-                if (tg && tg.showAlert) tg.showAlert('Спасибо! Вы приняли пользовательское соглашение. (Отладка)');
-            }
-            // ------------------------------------------
+        modal.classList.add('active');
+        overlay.classList.add('active');
 
-            renderProfile(); // Перерисовываем, чтобы обновить состояние
+        getEl('terms-text').innerHTML = `
+            <h2>Пользовательское соглашение</h2>
+            <p>Здесь будет текст пользовательского соглашения для исполнителей и заказчиков.</p>
+            <p>Исполнители обязуются выполнять задания качественно и в установленные сроки.</p>
+            <p>Заказчики обязуются предоставлять корректные задания и оплачивать их выполнение.</p>
+        `;
+
+        getEl('terms-accept').onclick = () => {
+            currentUserData.isAgreementAccepted = true;
+            modal.classList.remove('active');
+            overlay.classList.remove('active');
         };
-    }
 
-    const btnTermsClose = getEl('modal-close-terms');
-    if (btnTermsClose) {
-        btnTermsClose.onclick = () => hideModal('terms-modal');
-    }
-    
-    // Модальное окно админ-бота
-    const btnAdminClose = getEl('modal-close-admin-bot');
-    if (btnAdminClose) {
-        btnAdminClose.onclick = () => hideModal('admin-bot-modal');
-    }
-
-    const btnAdminCopy = getEl('modal-copy-botname');
-    if (btnAdminCopy) {
-        btnAdminCopy.onclick = () => {
-            // Используем document.execCommand('copy') для совместимости с iframe
-            const el = document.createElement('textarea');
-            el.value = BOT_USERNAME;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-
-            if (tg && tg.showAlert) tg.showAlert(`Имя бота ${BOT_USERNAME} скопировано.`);
+        getEl('terms-close').onclick = () => {
+            modal.classList.remove('active');
+            overlay.classList.remove('active');
         };
-    }
+    };
 
-    // --- Запуск ---
-    // Начинаем с экрана заданий
-    setScreen('worker-tasks-container');
-    renderWorkerTasks();
-    renderBottomNav();
+    // 10. Инициализация
+    const initAppUI = () => {
+        renderBottomNav();
+        renderWorkerTasks();
+        renderGlobalHeader('');
+
+        // Слушатель для изменения размера веб-аппа
+        window.addEventListener('resize', () => {
+            // Можно адаптировать интерфейс под изменение размеров
+        });
+    };
+
+    initAppUI();
 });
