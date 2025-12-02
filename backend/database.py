@@ -2,16 +2,21 @@ import sqlite3
 import time
 from pathlib import Path
 
-# Базовая директория = корень проекта (папка PROFIT)
-BASE_DIR = Path(__file__).resolve().parent.parent
+# Базовая директория - это папка, где находится database.py (т.е., backend/)
+BASE_DIR = Path(__file__).resolve().parent
 
-# Путь к файлу базы данных: PROFIT/data/profit_pro_hub_v4.db
-DB_PATH = BASE_DIR / "data" / "profit_pro_hub_v4.db"
+# PROJECT_ROOT - это папка на один уровень выше (../)
+PROJECT_ROOT = BASE_DIR.parent 
 
+# Путь к файлу базы данных: /ROOT/data/profit_pro_hub_v4.db
+DB_PATH = PROJECT_ROOT / "data" / "profit_pro_hub_v4.db"
 
 
 def init_db():
-    """Создание таблиц для полноценной системы (включая модерацию и транзакции)."""
+    """Создание таблиц для полноценной системы."""
+    # Убедимся, что папка 'data' существует в корне проекта
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -196,8 +201,3 @@ def db_query(query, params=(), fetchone=False, commit=True, fetchall=False):
 
     conn.close()
     return result
-
-
-# Инициализация базы при импорте модуля
-init_db()
-setup_initial_data()

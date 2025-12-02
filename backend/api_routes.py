@@ -1,12 +1,14 @@
-# api_routes.py 
+# backend/api_routes.py 
 
 import json
 import sqlite3
 import random
 import time
 
-from .database import db_query
-from .config import BOT_TOKEN, ADMIN_BOT_TOKEN  # если ADMIN_BOT_TOKEN не нужен, всё равно можно оставить
+# --- ИСПРАВЛЕНИЕ: Используем прямые импорты, так как все файлы в одной папке (backend/) ---
+from database import db_query
+from config import BOT_TOKEN, ADMIN_BOT_TOKEN 
+# ------------------------------------------------------------------------------------------
 
 
 # --- Вспомогательные Функции для Управления Средствами ---
@@ -59,11 +61,11 @@ def handle_web_app_data(user_id: int, data_json: str):
     action = data.get('action')
     
     # Проверка на блокировку (исключаем повтор кода)
-    is_blocked = db_query("SELECT is_blocked FROM users WHERE user_id = ?", (user_id,), fetchone=True)
-    if is_blocked and is_blocked[0]:
+    is_blocked_result = db_query("SELECT is_blocked FROM users WHERE user_id = ?", (user_id,), fetchone=True)
+    if is_blocked_result and is_blocked_result[0]:
         return "🛑 Ваш аккаунт заблокирован модератором."
         
-    # --- A. Сохранение профиля Исполнителя (без изменений) ---
+    # --- A. Сохранение профиля Исполнителя ---
     if action == 'save_profile':
         age = data.get('age')
         gender = data.get('gender')
@@ -74,10 +76,12 @@ def handle_web_app_data(user_id: int, data_json: str):
                  
         return "✅ **Анкета Исполнителя сохранена!** Вы можете выполнять задания."
         
-    # --- B. Сохранение факта принятия соглашения Заказчика (без изменений) ---
-    elif action == 'accept_agreement':
+    # --- B. Сохранение факта принятия соглашения Заказчика / Исполнителя ---
+    elif action == 'accept_agreement' or action == 'accept_terms':
+        # Принятие соглашения заказчика (accept_agreement) или исполнителя (accept_terms, как в app.js)
         db_query("UPDATE users SET is_agreement_accepted = TRUE WHERE user_id = ?", (user_id,))
-        return "✅ **Пользовательское соглашение принято!** Теперь вы можете создавать задания."
+        return "✅ **Пользовательское соглашение принято!** Теперь вы можете работать с заданиями."
+
 
     # --- C. Начало выполнения задания (ЛОГИКА ЭСКРОУ) ---
     elif action == 'start_perform_task':
@@ -129,13 +133,19 @@ def handle_web_app_data(user_id: int, data_json: str):
         count = data.get('count')
         total = data.get('total')
         status = data.get('status')
-        task_type = data.get('taskType') # НОВЫЙ
+        task_type = data.get('taskType') 
 
-        current_balance, current_pending = db_query("SELECT balance_simulated, pending_balance FROM users WHERE user_id = ?", 
+        balance_data = db_query("SELECT balance_simulated, pending_balance FROM users WHERE user_id = ?", 
                                                     (user_id,), fetchone=True)
+        if not balance_data:
+            return "🛑 Ошибка: Пользователь не найден."
 
-        if status == 'Запущено':
+        current_balance, current_pending = balance_data
+
+        if status == 'Запущено' and current_balance >= total:
             new_balance = current_balance - total
+            # Средства заказчика переводятся из основного баланса в его же "pending_balance"
+            # pending_balance используется здесь как Эскроу-счет.
             new_pending = current_pending + total 
             
             # 1. Обновление балансов заказчика (Основной -> Эскроу)
@@ -153,12 +163,14 @@ def handle_web_app_data(user_id: int, data_json: str):
             return f"✅ **Задание запущено!**\n" \
                    f"Сумма **{total:.2f} ⭐️** переведена в Эскроу. Старт работы исполнителей!"
         
+        elif current_balance < total:
+             return f"🛑 **Ошибка:** Недостаточно средств на балансе. Требуется **{total:.2f} ⭐️**."
+        
         else:
             return f"⚠️ Задание не запущено. Статус: **{status}**."
             
     # --- E. Создание Тикета Модерации (ЖАЛОБА) ---
     elif action == 'create_ticket':
-        # ... (логика без изменений)
         ticket_type = data.get('type') 
         subject_id = data.get('subjectId')
         task_id = data.get('taskId')

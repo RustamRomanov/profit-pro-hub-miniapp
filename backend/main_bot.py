@@ -13,19 +13,27 @@ from telegram.ext import (
 import random
 import time
 
-from .database import db_query
+# --- ИМПОРТЫ МОДУЛЕЙ ИЗ ТЕКУЩЕГО ПАКЕТА (backend) ---
+# Для запуска через `python3 -m backend.main_bot` используем относительный импорт (`.module_name`)
+from .database import db_query, init_db
 from .config import BOT_TOKEN, MINI_APP_URL, PROJECT_NAME
 from .api_routes import handle_web_app_data
 
 
-CHECK_INTERVAL_SECONDS = 3600  # Проверка подписок раз в час
+CHECK_INTERVAL_SECONDS = 3600  # Проверка подписок раз в час (1 час)
 
 
 # --- JobQueue: проверка 7-дневного Эскроу ---
+# (Оставлен для полноты, но требует доработки логики проверки подписки через API)
 
 async def check_subscriptions_job(context: ContextTypes.DEFAULT_TYPE):
+    """
+    Проверяет, какие задания на подписку прошли 7-дневный период Эскроу,
+    и начисляет средства исполнителю.
+    """
     now = int(time.time())
 
+    # Выбираем записи, у которых время проверки уже наступило
     pending_checks = db_query("""
         SELECT 
             tc.id, tc.user_id, tc.task_id, tc.amount, t.target_link
@@ -38,89 +46,82 @@ async def check_subscriptions_job(context: ContextTypes.DEFAULT_TYPE):
         return
 
     for check_id, user_id, task_id, amount, target_link in pending_checks:
-        # Имитация проверки подписки (90% успеха)
-        is_still_subscribed = random.random() < 0.90
-
-        if is_still_subscribed:
-            db_query("""
-                UPDATE users
-                SET pending_balance = pending_balance - ?,
-                    balance_simulated = balance_simulated + ?,
-                    tasks_completed = tasks_completed + 1
-                WHERE user_id = ?
-            """, (amount, amount, user_id))
-
-            db_query("UPDATE task_checks SET status = 'completed' WHERE id = ?", (check_id,))
-
-            db_query("""
-                UPDATE transactions
-                SET status = 'completed'
-                WHERE related_id = ? AND user_id = ? AND type = 'task_pending'
-            """, (task_id, user_id))
-
+        # 1. TODO: Реализовать здесь фактическую проверку подписки через Telegram API
+        is_subscribed = True 
+        
+        # 2. Обработка результата
+        if is_subscribed:
+            # Начисление исполнителю и списание из Эскроу заказчика
+            db_query("UPDATE users SET pending_balance = pending_balance - ?, balance_simulated = balance_simulated + ? WHERE user_id = ?", (amount, amount, user_id))
+            db_query("UPDATE task_checks SET status = 'completed', completed_at = ? WHERE id = ?", (now, check_id))
+            db_query("INSERT INTO transactions (user_id, amount, type, related_id) VALUES (?, ?, ?, ?)", (user_id, amount, 'task_reward', task_id))
+            db_query("UPDATE users SET tasks_completed = tasks_completed + 1 WHERE user_id = ?", (user_id,))
+            
+            # Отправка уведомления пользователю
             await context.bot.send_message(
-                user_id,
-                f"🎉 *Проверка подписки успешно пройдена!*\n"
-                f"Задание #{task_id}: *{amount:.2f} ⭐️* переведены из Эскроу на основной баланс.",
+                chat_id=user_id,
+                text=f"**🎉 Проверка пройдена!**\n\nЗадание #{task_id} успешно прошло 7-дневный Эскроу. На ваш основной баланс зачислено **{amount:.2f} ⭐️**.",
                 parse_mode='Markdown'
             )
         else:
-            db_query("""
-                UPDATE users
-                SET pending_balance = pending_balance - ?
-                WHERE user_id = ?
-            """, (amount, user_id))
-
-            db_query("UPDATE task_checks SET status = 'failed' WHERE id = ?", (check_id,))
-
-            db_query("""
-                UPDATE transactions
-                SET status = 'failed'
-                WHERE related_id = ? AND user_id = ? AND type = 'task_pending'
-            """, (task_id, user_id))
-
+            # Если проверка не пройдена (пользователь отписался)
+            # 1. Отменить Эскроу у исполнителя (вернуть средства заказчику)
+            db_query("UPDATE users SET pending_balance = pending_balance - ? WHERE user_id = ?", (amount, user_id))
+            # 2. TODO: Вернуть средства заказчику 
+            db_query("UPDATE task_checks SET status = 'failed', completed_at = ? WHERE id = ?", (now, check_id))
+            
             await context.bot.send_message(
-                user_id,
-                f"❌ *Проверка подписки не пройдена.*\n"
-                f"Вы были отписаны от канала задания #{task_id}. "
-                f"Сумма *{amount:.2f} ⭐️* снята с Эскроу.",
+                chat_id=user_id,
+                text=f"**🚫 Проверка не пройдена.**\n\nВы отписались от канала до завершения 7-дневного периода для задания #{task_id}.",
                 parse_mode='Markdown'
             )
+            
+    print("JobQueue: Завершено выполнение плановой проверки подписок.")
 
-    print(f"Завершена проверка {len(pending_checks)} подписок.")
 
+# --- Основные команды бота ---
 
-# --- /start ---
-
-async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
-    username = update.effective_user.username or update.effective_user.first_name
+    
+    # 1. Регистрируем пользователя
+    try:
+        db_query("INSERT INTO users (user_id) VALUES (?)", (user_id,), commit=True)
+    except sqlite3.IntegrityError:
+        pass
 
-    user_data = db_query("""
-        SELECT user_id, balance_simulated, pending_balance, profile_emoji
-        FROM users
-        WHERE user_id = ?
-    """, (user_id,), fetchone=True)
-
-    if not user_data:
-        random_emoji = random.choice(EMOJI_AVATARS)
-        db_query("""
-            INSERT INTO users 
-            (user_id, balance_simulated, pending_balance, is_agreement_accepted,
-             profile_emoji, rating, tasks_completed, profile_age, profile_gender, profile_country)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (user_id, 50.0, 0.0, False, random_emoji, 5.0, 0, 0, '', ''))
-
-    app_button = InlineKeyboardButton(
-        text=f"▶️ Открыть {PROJECT_NAME}",
-        web_app=WebAppInfo(url=MINI_APP_URL)
+    # 2. Проверяем, принял ли пользователь соглашение
+    user_data = db_query("SELECT is_agreement_accepted FROM users WHERE user_id = ?", (user_id,), fetchone=True)
+    is_accepted = user_data[0] if user_data else False
+    
+    # 3. Формируем текст
+    welcome_text = (
+        f"**👋 Добро пожаловать, {update.effective_user.first_name}!**\n\n"
+        f"Я бот {PROJECT_NAME}. Здесь вы можете **зарабатывать ⭐️** и **заказывать** продвижение.\n\n"
     )
+    
+    if not is_accepted:
+        welcome_text += (
+            "**⚠️ ВНИМАНИЕ:** Перед началом работы необходимо принять **Пользовательское соглашение** "
+            "в Mini App в разделе 'Профиль'."
+        )
+    else:
+        welcome_text += "Нажмите кнопку **'Открыть Mini App'** ниже, чтобы приступить к заданиям."
 
-    keyboard = InlineKeyboardMarkup([[app_button]])
+    # 4. Формируем кнопку Mini App
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                "🚀 Открыть Mini App",
+                web_app=WebAppInfo(url=MINI_APP_URL)
+            )
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
-        f"👋 Добро пожаловать, *{username}*!\nОткройте Mini App, чтобы начать работу.",
-        reply_markup=keyboard,
+        welcome_text,
+        reply_markup=reply_markup,
         parse_mode='Markdown'
     )
 
@@ -131,11 +132,16 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def web_app_data_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Обработчик данных, отправленных из Mini App (tg.sendData).
+    """
     user_id = update.effective_user.id
     data_json = update.effective_message.web_app_data.data
-
+    
+    # Обрабатываем данные, используя логику из api_routes.py
     response_text = handle_web_app_data(user_id, data_json)
 
+    # Отправляем ответ пользователю в чат бота
     await update.effective_message.reply_text(
         response_text,
         parse_mode='Markdown'
@@ -143,21 +149,21 @@ async def web_app_data_handler(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 def main():
+    """
+    Основная функция запуска бота.
+    """
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # ⚠ ВРЕМЕННО отключаем JobQueue, чтобы бот просто запустился
-    # Если потом захочешь включить проверки эскроу:
-    # 1) установи:  pip install "python-telegram-bot[job-queue]"
-    # 2) раскомментируй строки ниже.
-
-    # job_queue = application.job_queue
-    # if job_queue is not None:
-    #     job_queue.run_repeating(
-    #         check_subscriptions_job,
-    #         interval=CHECK_INTERVAL_SECONDS,
-    #         first=10,
-    #     )
-
+    # --- JobQueue (Плановые задачи) ---
+    job_queue = application.job_queue
+    if job_queue is not None:
+        job_queue.run_repeating(
+            check_subscriptions_job,
+            interval=CHECK_INTERVAL_SECONDS,
+            first=10, 
+        )
+    
+    # --- Обработчики команд и событий ---
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CallbackQueryHandler(button_callback))
     application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data_handler))
@@ -166,8 +172,13 @@ def main():
     try:
         application.run_polling()
     except telegram.error.InvalidToken as e:
-        print(f"Критическая ошибка: Неверный токен основного бота. Проверь config.py. Детали: {e}")
+        print(f"Критическая ошибка: Неверный токен основного бота. Проверь config.")
+    except Exception as e:
+        print(f"Неизвестная ошибка при запуске: {e}")
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
+    # 1. Инициализация базы данных (используем относительный импорт)
+    init_db()
+    
+    # 2. Запуск бота
     main()
