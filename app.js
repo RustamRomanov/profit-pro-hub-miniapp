@@ -3,58 +3,91 @@ document.addEventListener('DOMContentLoaded', () => {
     const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
     if (tg) {
         tg.ready();
+        // РЕКОМЕНДАЦИЯ: Включаем tg.expand() для лучшего UX
         tg.expand();
     }
 
     // === Вспомогательные ===
     const BOT_USERNAME = '@lookgroup_bot'; 
     const getEl = (id) => document.getElementById(id);
+    
+    // Новая константа для символа валюты (Telegram Star)
     const CURRENCY_STAR = '<i class="fas fa-star" style="color: var(--accent-color);"></i>';
 
     const user = tg && tg.initDataUnsafe && tg.initDataUnsafe.user
         ? tg.initDataUnsafe.user
         : { id: 12345, username: 'User', first_name: 'Пользователь' };
 
+// Настройки фильтра заданий
+let currentPriceSort = 'none'; // 'none' | 'asc' | 'desc'
+let currentTypeFilter = 'all';
+
+// Применение фильтра/сортировки к списку
+const applyTaskFilters = (tasks) => {
+    let result = tasks.slice();
+
+    // Фильтр по типу
+    if (currentTypeFilter !== 'all') {
+        result = result.filter(t => t.type === currentTypeFilter);
+    }
+
+    // Сортировка по цене
+    if (currentPriceSort === 'asc') {
+        result.sort((a, b) => a.cost - b.cost);
+    } else if (currentPriceSort === 'desc') {
+        result.sort((a, b) => b.cost - a.cost);
+    }
+
+    return result;
+};
+
+
+    // Мок-данные пользователя (в реале должны загружаться из БД)
     let currentUserData = {
         id: user.id,
         name: user.username || user.first_name || 'Пользователь',
         age: 25,
         gender: 'M',
         country: 'Россия',
-        balance: 50.75,
-        pending_balance: 15.0,
+        balance: 50.75, // Общий баланс
+        pending_balance: 15.0, // Ожидание поступлений (в эскроу)
         tasks_completed: 154,
+        isFilled: true,
+        isAgreementAccepted: true, 
         isTermsAccepted: false 
     };
     
-    currentUserData.withdrawable_balance = Math.max(0, currentUserData.balance - currentUserData.pending_balance);
+    // Request 12: Расчет Готово к выводу
+    let withdrawableBalance = currentUserData.balance - currentUserData.pending_balance;
+    if (withdrawableBalance < 0) withdrawableBalance = 0;
 
-    // Мок-данные заданий
-    // available - это то, что будет обновляться ежесекундно
-    let mockTasks = [
-        { id: 10, type: 'subscribe', title: 'Мое задание (На модерации)', description: 'Тест.', cost: 0.30, available: 5, total: 5, isCreatorTask: true, isModeration: true, creatorId: currentUserData.id },
-        { id: 1, type: 'subscribe', title: 'Подписка на канал "Мои Финансы"', description: 'Подписка.', cost: 0.25, available: 42, total: 100, isCreatorTask: false, isModeration: false },
-        { id: 2, type: 'comment', title: 'Оставить 5 комментариев', description: 'Комментарии.', cost: 0.50, available: 12, total: 150, isCreatorTask: false, isModeration: false },
-        { id: 3, type: 'view', title: 'Просмотр ролика (120 сек)', description: 'Видео.', cost: 0.15, available: 300, total: 500, isCreatorTask: false, isModeration: false },
-        { id: 4, type: 'subscribe', title: 'Подписка на "Путешествия"', description: 'Подписка.', cost: 0.20, available: 80, total: 100, isCreatorTask: false, isModeration: false },
-        { id: 5, type: 'comment', title: 'Коммент в чате', description: '...', cost: 0.40, available: 150, total: 200, isCreatorTask: false, isModeration: false },
-        { id: 11, type: 'view', title: 'Мое задание (Активное)', description: 'Тест.', cost: 0.10, available: 490, total: 500, isCreatorTask: true, isModeration: false, creatorId: currentUserData.id },
+    currentUserData.withdrawable_balance = withdrawableBalance;
+
+    // Мок-данные заданий (имитация)
+    const mockTasks = [
+        // Задание создателя на модерации (Request 6, 14: видно, выделено рамкой)
+        { id: 10, type: 'subscribe', title: 'Мое задание (На модерации)', description: 'Тестовое задание создателя, которое еще не прошло модерацию.', cost: 0.30, available: 5, total: 5, isCreatorTask: true, isModeration: true, creatorId: currentUserData.id },
+        // Обычные задания для исполнителей
+        { id: 1, type: 'subscribe', title: 'Подписка на канал "Мои Финансы"', description: 'Открытая подписка, просто подпишитесь.', cost: 0.25, available: 50, total: 100, isCreatorTask: false, isModeration: false },
+        { id: 2, type: 'comment', title: 'Оставить 5 комментариев под видео', description: 'Комментарии должны быть осмысленными и не короче 5 слов.', cost: 0.50, available: 120, total: 150, isCreatorTask: false, isModeration: false },
+        { id: 3, type: 'view', title: 'Просмотр ролика (120 сек)', description: 'Просмотреть видео целиком, до конца.', cost: 0.15, available: 300, total: 500, isCreatorTask: false, isModeration: false },
+        { id: 4, type: 'subscribe', title: 'Подписка на канал "Путешествия"', description: 'Подписка + 1 лайк.', cost: 0.20, available: 80, total: 100, isCreatorTask: false, isModeration: false },
+        { id: 5, type: 'comment', title: 'Оставить комментарий в Telegram-чате', description: '...', cost: 0.40, available: 150, total: 200, isCreatorTask: false, isModeration: false },
+        // Задание создателя, которое прошло модерацию (Request 6: видно, но не выделено)
+        { id: 11, type: 'view', title: 'Мое задание (Активное)', description: 'Тестовое задание создателя, прошедшее модерацию.', cost: 0.10, available: 500, total: 500, isCreatorTask: true, isModeration: false, creatorId: currentUserData.id },
+
     ];
 
-    // Состояние фильтра
-    let currentFilter = {
-        sort: 'default', // default, price_desc, price_asc, count_asc
-        type: 'all'      // all, subscribe, comment, view
-    };
-
+    // История экранов для навигации
     let screenHistory = ['worker-tasks-container'];
-    let currentTaskDetails = null;
+    let currentTaskDetails = null; // Для хранения текущего задания
 
-    // === УПРАВЛЕНИЕ ЭКРАНАМИ ===
+    // === УПРАВЛЕНИЕ ЭКРАНАМИ и ХЕДЕРОМ ===
     const setScreen = (screenId, title = null, showBack = false) => {
-        document.querySelectorAll('.screen-container').forEach(s => {
-            s.style.display = 'none';
-            s.classList.remove('active');
+        const screens = document.querySelectorAll('.screen-container');
+        screens.forEach(screen => {
+            screen.style.display = 'none';
+            screen.classList.remove('active');
         });
 
         const activeScreen = getEl(screenId);
@@ -63,292 +96,649 @@ document.addEventListener('DOMContentLoaded', () => {
             activeScreen.classList.add('active');
         }
 
-        if (screenHistory[screenHistory.length - 1] !== screenId) screenHistory.push(screenId);
+        // Обновление истории
+        if (screenHistory[screenHistory.length - 1] !== screenId) {
+            screenHistory.push(screenId);
+        }
         
+        // Управление хедером
         const headerBar = getEl('global-header-bar');
         const bottomNav = document.querySelector('.bottom-nav-bar');
 
         if (showBack) {
+            // Скрываем нижнее меню, показываем верхний бар
             bottomNav.style.display = 'none';
             headerBar.style.display = 'flex';
+            
+            // Render back button and title
             headerBar.innerHTML = `
                 <button id="header-back-btn" class="header-button"><i class="fas fa-arrow-left"></i></button>
                 <div class="header-title">${title || ''}</div>
-                <div style="width: 25px;"></div>
+                <div style="width: 25px;"></div> <!-- Placeholder for centering -->
             `;
+            
+            // Request 7: Название задания на экране деталей убрано, title будет пустым в renderTaskDetails
+            // Для экрана создания задания title будет "Создать задание"
+
             getEl('header-back-btn').onclick = goBack;
+
         } else {
+            // Показываем нижнее меню, скрываем верхний бар
             bottomNav.style.display = 'flex';
             headerBar.style.display = 'none';
         }
         
-        // Обновление табов (цвета и стили)
-        document.querySelectorAll('.tab-item').forEach(tab => tab.classList.remove('active'));
+        // Request 2: Управление активным табом
+        document.querySelectorAll('.tab-item').forEach(tab => {
+            tab.classList.remove('active');
+        });
         const activeTab = document.querySelector(`.tab-item[data-screen="${screenId}"]`);
-        if (activeTab) activeTab.classList.add('active');
+        if (activeTab) {
+            tab.classList.add('active');
+        }
     };
     
+    // Функция для возврата назад (для кнопки и свайпа)
     const goBack = () => {
         if (screenHistory.length > 1) {
+            // Удаляем текущий экран из истории
             screenHistory.pop(); 
+            // Получаем предыдущий
             const prevScreenId = screenHistory[screenHistory.length - 1]; 
+            
+            // Специальная обработка для главного экрана
             if (prevScreenId === 'worker-tasks-container') {
                  setScreen(prevScreenId, null, false);
             } else {
-                let title = prevScreenId === 'create-task-container' ? 'Создать задание' : '';
-                setScreen(prevScreenId, title, true);
+                // Если экран деталей или создания, то снова показываем заголовок
+                let title = '';
+                let showBack = true;
+                if (prevScreenId === 'task-details-container') {
+                    // Перерендерим детали, если нужно
+                    renderTaskDetails(currentTaskDetails);
+                } else if (prevScreenId === 'create-task-container') {
+                    title = 'Создать задание';
+                }
+                setScreen(prevScreenId, title, showBack);
             }
         }
     };
 
+
+    // === ОБРАБОТЧИКИ НАВИГАЦИИ (Request 2) ===
     document.querySelectorAll('.tab-item').forEach(tab => {
-        tab.onclick = () => setScreen(tab.getAttribute('data-screen'));
+        tab.onclick = () => {
+            const screenId = tab.getAttribute('data-screen');
+            setScreen(screenId);
+        };
     });
     
-    getEl('create-task-btn').onclick = () => setScreen('create-task-container', 'Создать задание', true);
+    getEl('create-task-btn').onclick = () => {
+        setScreen('create-task-container', 'Создать задание', true);
+    };
 
     // === ФУНКЦИИ РЕНДЕРИНГА ===
     
+    // Функция для получения иконки типа задания
     const getTaskIcon = (type) => {
         switch (type) {
-            case 'subscribe': return '<i class="fas fa-user-plus"></i>';
-            case 'comment': return '<i class="fas fa-comment-dots"></i>';
-            case 'view': return '<i class="fas fa-eye"></i>';
-            default: return '<i class="fas fa-star"></i>';
+            case 'subscribe':
+                return '<i class="fas fa-user-plus" style="color: var(--subscribe-text);"></i>';
+            case 'comment':
+                return '<i class="fas fa-comment-dots" style="color: var(--comment-text);"></i>';
+            case 'view':
+                return '<i class="fas fa-eye" style="color: var(--view-text);"></i>';
+            case 'other':
+            default:
+                return '<i class="fas fa-ellipsis-h" style="color: var(--other-text);"></i>';
         }
     };
 
-    const getTaskTypeLabel = (type) => {
-        switch (type) {
-            case 'subscribe': return 'Подписка';
-            case 'comment': return 'Комментарий';
-            case 'view': return 'Просмотр';
-            default: return 'Задание';
-        }
-    };
+    // Рендеринг карточки задания
+const renderTaskItem = (task) => {
+    const isMyTask = task.creatorId === currentUserData.id;
+    const taskClass = isMyTask && task.isModeration ? 'creator-task' : '';
+    const taskIcon = getTaskIcon(task.type);
 
-    // Рендеринг карточки (Обновленный дизайн)
-    const renderTaskItem = (task) => {
-        const isMyTask = task.creatorId === currentUserData.id;
-        const taskClass = isMyTask && task.isModeration ? 'creator-task' : '';
-        const iconColor = `var(--${task.type}-text)`;
-        const bgIcon = `var(--${task.type}-bg)`;
+    // Считаем, сколько осталось выполнений
+    // Если у тебя другие поля — подставь свои (например task.total, task.done и т.п.)
+    const total = Number(task.total ?? 0);
+    const done = Number(task.done ?? 0);
+    const remaining = Math.max(total - done, 0);
 
-        // Класс для малого количества заданий
-        const stockClass = task.available < 20 ? 'low-stock' : '';
+    const typeText =
+        task.type === 'subscribe'
+            ? 'Подписка'
+            : task.type === 'comment'
+            ? 'Комментарий'
+            : task.type === 'view'
+            ? 'Просмотр'
+            : 'Другое';
 
-        return `
-            <div class="task-item ${taskClass}" data-task-id="${task.id}">
-                <!-- Иконка -->
-                <div style="width: 40px; height: 40px; border-radius: 8px; background: ${bgIcon}; display: flex; align-items: center; justify-content: center; margin-right: 12px; color: ${iconColor}; font-size: 18px;">
-                    ${getTaskIcon(task.type)}
+    const moderationBadge = isMyTask && task.isModeration
+        ? '<span style="color: var(--border-creator-task); font-weight: 600; margin-left: 4px;">(Модерация)</span>'
+        : '';
+
+    return `
+        <div class="task-item ${taskClass}" data-task-id="${task.id}">
+            <!-- Логотип задания -->
+            <div class="task-logo-icon" style="font-size: 20px; margin-right: 15px;">
+                ${taskIcon}
+            </div>
+
+            <div class="task-info">
+                <div class="task-title">${task.title}</div>
+                <div class="task-available-info">
+                    Осталось ${remaining} заданий
                 </div>
-
-                <div class="task-info">
-                    <div class="task-title">${task.title}</div>
-                    
-                    <!-- Обновлено: Осталось заданий под названием -->
-                    <div class="task-remaining-line ${stockClass}">
-                        Осталось <span id="task-remaining-counter-${task.id}">${task.available}</span> заданий
-                    </div>
-
-                    <div class="task-meta">
-                        <span class="task-meta-badge" style="color: ${iconColor}">${getTaskTypeLabel(task.type)}</span>
-                        ${isMyTask && task.isModeration ? '<span style="color:var(--border-creator-task);">(Модерация)</span>' : ''}
-                    </div>
-                </div>
-                
-                <div class="task-action">
-                    <!-- Только цена, количество перенесено влево -->
-                    <span class="task-cost-badge">${CURRENCY_STAR} ${task.cost.toFixed(2)}</span>
+                <div class="task-meta">
+                    ${typeText}${moderationBadge}
                 </div>
             </div>
-        `;
-    };
 
+            <div class="task-action">
+                <span class="task-cost-badge">${CURRENCY_STAR} ${task.cost.toFixed(2)}</span>
+            </div>
+        </div>
+    `;
+};
+
+
+    // Рендеринг списка заданий
     const renderWorkerTasks = () => {
-        const listContainer = getEl('task-list');
-        
-        // 1. Фильтрация
-        let filtered = mockTasks.filter(task => {
-            const isMyModeration = task.isCreatorTask && task.isModeration && task.creatorId === currentUserData.id;
-            const isNormal = !task.isCreatorTask || (task.isCreatorTask && !task.isModeration);
-            
-            // Фильтр по типу
-            const typeMatch = currentFilter.type === 'all' || task.type === currentFilter.type;
+    const listContainer = getEl('task-list');
+    if (!listContainer) return;
 
-            return (isMyModeration || isNormal) && typeMatch;
-        });
+    // Базовая фильтрация: показываем мои задания на модерации + доступные задания
+    const baseTasks = mockTasks.filter(task => {
+        const isMyModerationTask =
+            task.isCreatorTask &&
+            task.isModeration &&
+            task.creatorId === currentUserData.id;
 
-        // 2. Сортировка
-        filtered.sort((a, b) => {
-            if (currentFilter.sort === 'price_desc') return b.cost - a.cost;
-            if (currentFilter.sort === 'price_asc') return a.cost - b.cost;
-            if (currentFilter.sort === 'count_asc') return a.available - b.available;
-            return 0; // default
-        });
+        const isAvailableForWorker =
+            !task.isCreatorTask || (task.isCreatorTask && !task.isModeration);
 
-        if (filtered.length === 0) {
-            listContainer.innerHTML = '<p style="text-align: center; color: var(--hint-color); padding-top: 20px;">Нет заданий по выбранным фильтрам.</p>';
-        } else {
-            listContainer.innerHTML = filtered.map(renderTaskItem).join('');
-            listContainer.querySelectorAll('.task-item').forEach(item => {
-                item.onclick = () => {
-                    const taskId = parseInt(item.getAttribute('data-task-id'));
-                    const task = mockTasks.find(t => t.id === taskId);
-                    if (task) renderTaskDetails(task);
-                };
-            });
-        }
-    };
+        return isMyModerationTask || isAvailableForWorker;
+    });
 
-    // --- СИМУЛЯЦИЯ АКТИВНОСТИ (Ежесекундное обновление) ---
-    setInterval(() => {
-        // 1. Выбираем случайное задание
-        const randomTaskIndex = Math.floor(Math.random() * mockTasks.length);
-        const task = mockTasks[randomTaskIndex];
+    // Применяем фильтр/сортировку
+    const filteredTasks = applyTaskFilters(baseTasks);
 
-        // 2. Уменьшаем количество с некоторой вероятностью (не каждый тик, чтобы не слишком быстро)
-        if (task.available > 0 && Math.random() > 0.3) {
-            task.available--;
-            
-            // 3. Обновляем DOM точечно (без перерисовки всего списка)
-            const counterEl = getEl(`task-remaining-counter-${task.id}`);
-            if (counterEl) {
-                counterEl.textContent = task.available;
-                
-                // Если стало мало, добавим класс красного цвета
-                if (task.available < 20) {
-                    counterEl.parentElement.classList.add('low-stock');
-                }
-            }
-        }
-    }, 1000); // Раз в секунду
+    if (filteredTasks.length === 0) {
+        listContainer.innerHTML = `
+            <p style="color: var(--hint-color); font-size: 14px;">
+                Пока нет доступных заданий.
+            </p>
+        `;
+    } else {
+        listContainer.innerHTML = filteredTasks.map(renderTaskItem).join('');
+    }
 
+    // Обновляем заголовок и счетчик (если ты ещё где-то используешь)
+    const taskListTitle = document.querySelector('.task-list-title');
+    if (taskListTitle) {
+        taskListTitle.textContent = 'Все задания на рынке';
+    }
 
-    // --- ЛОГИКА ФИЛЬТРА ---
-    getEl('tasks-filter-btn').onclick = () => {
-        getEl('filter-modal').style.display = 'flex';
-    };
+    const taskCountDisplay = getEl('tasks-count-display');
+    if (taskCountDisplay) {
+        taskCountDisplay.textContent = filteredTasks.length;
+    }
+};
 
-    getEl('apply-filter-btn').onclick = () => {
-        const sortVal = getEl('filter-sort-select').value;
-        const typeVal = getEl('filter-type-select').value;
-        
-        currentFilter.sort = sortVal;
-        currentFilter.type = typeVal;
-        
-        renderWorkerTasks(); // Перерисовываем список
-        getEl('filter-modal').style.display = 'none';
-        
-        // Меняем иконку фильтра, если активен
-        const filterBtn = getEl('tasks-filter-btn');
-        if (sortVal !== 'default' || typeVal !== 'all') {
-            filterBtn.style.color = 'var(--accent-color)';
-            filterBtn.innerHTML = '<i class="fas fa-filter"></i> Активен';
-        } else {
-            filterBtn.style.color = 'var(--link-color)';
-            filterBtn.innerHTML = '<i class="fas fa-filter"></i> Фильтр';
-        }
-    };
     
-    
-    // Рендеринг деталей (упрощенно для экономии места)
+    // Рендеринг деталей задания
     const renderTaskDetails = (task) => {
-        currentTaskDetails = task;
-        setScreen('task-details-container', '', true); 
-        const isExecutable = task.creatorId !== currentUserData.id; 
+        currentTaskDetails = task; // Сохраняем для возможности "Назад"
+
         const detailsContainer = getEl('task-details-content');
+        if (!detailsContainer) return;
+
+        // Request 7: Убираем название задания из верхнего хедера.
+        // Передаем пустой заголовок, но showBack = true
+        setScreen('task-details-container', '', true); 
+        
+        const typeText = task.type === 'subscribe' ? 'Подписка' : task.type === 'comment' ? 'Комментарий' : task.type === 'view' ? 'Просмотр' : 'Другое';
+        
+        // Определяем, можно ли выполнять задание (для создателя - нет)
+        const isExecutable = task.creatorId !== currentUserData.id; 
         
         detailsContainer.innerHTML = `
             <div class="task-details-card">
-                 <div style="display: flex; align-items: center; margin-bottom: 15px;">
-                    <span class="task-type-badge" style="margin: 0; background-color: var(--${task.type}-bg); color: var(--${task.type}-text);">
-                        ${getTaskIcon(task.type)} ${getTaskTypeLabel(task.type)}
-                    </span>
-                 </div>
+                <span class="task-type-badge" style="background-color: var(--${task.type}-bg); border: 1px solid var(--${task.type}-border); color: var(--${task.type}-text);">
+                    ${getTaskIcon(task.type)} ${typeText}
+                </span>
+                
                 <h2 class="task-details-title-display">${task.title}</h2>
+
                 <div class="task-detail-section">
-                    <h3>Описание</h3>
+                    <h3>Описание задания</h3>
                     <p>${task.description}</p>
                 </div>
+
                 <div class="task-detail-section">
+                    <h3>Условия и статистика</h3>
                     <ul class="task-detail-list">
-                        <li><span>Цена:</span><span>${CURRENCY_STAR} ${task.cost.toFixed(2)}</span></li>
-                        <li><span>Осталось мест:</span><span>${task.available} из ${task.total}</span></li>
+                        <!-- Заменяем ₽ на звезду -->
+                        <li><span>Цена за выполнение:</span><span>${CURRENCY_STAR} ${task.cost.toFixed(2)}</span></li>
+                        <li><span>Доступно/Всего:</span><span>${task.available}/${task.total}</span></li>
+                        <li><span>Пол:</span><span>Не важно</span></li>
+                        <li><span>Возраст:</span><span>18-99</span></li>
                     </ul>
                 </div>
             </div>
-            <div class="task-details-card" style="padding: 0;">
+            
+            <div class="task-details-card" style="padding-top: 0; padding-bottom: 0;">
                 <button id="execute-task-btn" class="btn-primary" ${isExecutable ? '' : 'disabled'} style="margin-top: 20px;">
-                    ${isExecutable ? `Выполнить (+${task.cost} ⭐️)` : 'Это Ваше задание'}
+                    <!-- Заменяем ₽ на звезду -->
+                    ${isExecutable ? `Начать выполнение (${task.cost.toFixed(2)} ${CURRENCY_STAR})` : 'Это Ваше задание'}
                 </button>
             </div>
         `;
-    };
-
-    const renderBalanceMenu = () => {
-        getEl('balance-info-list').innerHTML = `
-            <div class="balance-item total">
-                <span class="balance-item-title">Общий баланс</span>
-                <span class="balance-item-value" style="color: var(--success-color); font-size: 20px;">${CURRENCY_STAR} ${currentUserData.balance.toFixed(2)}</span>
-            </div>
-            <div class="balance-item">
-                <span class="balance-item-title">На проверке</span>
-                <span class="balance-item-value">${CURRENCY_STAR} ${currentUserData.pending_balance.toFixed(2)}</span>
-            </div>
-        `;
-        getEl('balance-value-display').innerHTML = `${currentUserData.balance.toFixed(2)} ${CURRENCY_STAR}`;
-    };
-
-    const renderProfile = () => {
-        // Упрощенная версия для примера
-        getEl('profile-menu-container').innerHTML = `
-            <div class="profile-card">
-                <div class="profile-header">
-                    <div class="avatar"><i class="fas fa-robot"></i></div>
-                    <div><p class="profile-name">${currentUserData.name}</p></div>
-                </div>
-                <button id="admin-bot-link" class="btn-secondary">Бот для проверки</button>
-                <div id="terms-link" class="profile-link">Соглашение</div>
-            </div>
-        `;
-        getEl('terms-link').onclick = () => getEl('terms-modal').style.display = 'flex';
-        getEl('admin-bot-link').onclick = () => getEl('admin-bot-modal').style.display = 'flex';
-    };
-
-    // === ПРЕДЛОЖЕНИЕ ПО УЛУЧШЕНИЮ КОДА ===
-    // Вместо того чтобы писать для каждого модального окна свой onclick,
-    // сделаем универсальную функцию закрытия.
-    const setupModalClose = (btnId, modalId) => {
-        const btn = getEl(btnId);
-        if (btn) btn.onclick = () => getEl(modalId).style.display = 'none';
-    };
-
-    setupModalClose('modal-close-terms', 'terms-modal');
-    setupModalClose('modal-close-rating', 'rating-modal');
-    setupModalClose('modal-close-admin-bot', 'admin-bot-modal');
-    setupModalClose('modal-close-filter', 'filter-modal'); // Для нового фильтра
-
-    // Логика создания задания (сокращено, аналогично прошлому разу)
-    const setupInputControls = (id, step) => {
-        const input = getEl(id);
-        const parent = input.closest('.input-with-controls');
-        parent.querySelector('.decrease-cost, .decrease-quantity').onclick = () => { input.value = Math.max(0, parseFloat(input.value) - step).toFixed(2); updateTotalCost(); };
-        parent.querySelector('.increase-cost, .increase-quantity').onclick = () => { input.value = (parseFloat(input.value) + step).toFixed(2); updateTotalCost(); };
+        
+        // Обработчик для кнопки "Начать выполнение"
+        const executeBtn = getEl('execute-task-btn');
+        if (executeBtn && isExecutable) {
+            executeBtn.onclick = () => {
+                if (tg && tg.showAlert) tg.showAlert(`Вы начали выполнение задания №${task.id}.`);
+                // В реальном приложении здесь будет переход на экран выполнения/таймер
+            };
+        }
     };
     
-    const updateTotalCost = () => {
-        const cost = parseFloat(getEl('task-cost-input').value) || 0;
-        const qty = parseInt(getEl('task-quantity-input').value) || 0;
-        getEl('total-cost-display').innerHTML = `${(cost * qty * 1.15).toFixed(2)} ${CURRENCY_STAR}`;
+    // Рендеринг меню баланса (Request 12)
+    const renderBalanceMenu = () => {
+        const balanceList = getEl('balance-info-list');
+        if (!balanceList) return;
+
+        balanceList.innerHTML = `
+            <div class="balance-item total">
+                <span class="balance-item-title">Общий баланс</span>
+                <!-- Заменяем ₽ на звезду -->
+                <span class="balance-item-value">${CURRENCY_STAR} ${currentUserData.balance.toFixed(2)}</span>
+            </div>
+            <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 10px 0;">
+            <div class="balance-item pending">
+                <span class="balance-item-title">Ожидание поступлений (в эскроу)</span>
+                <!-- Заменяем ₽ на звезду -->
+                <span class="balance-item-value">${CURRENCY_STAR} ${currentUserData.pending_balance.toFixed(2)}</span>
+            </div>
+            <div class="balance-item">
+                <span class="balance-item-title">Готово к выводу</span>
+                <!-- Заменяем ₽ на звезду -->
+                <span class="balance-item-value">${CURRENCY_STAR} ${currentUserData.withdrawable_balance.toFixed(2)}</span>
+            </div>
+        `;
+        
+        // Request 3: Обновление счетчика баланса в табе
+        const balanceValueDisplay = getEl('balance-value-display');
+        // Используем innerHTML для вставки иконки звезды рядом с числом
+        if (balanceValueDisplay) balanceValueDisplay.innerHTML = `${currentUserData.balance.toFixed(2)} ${CURRENCY_STAR}`;
     };
 
-    setupInputControls('task-cost-input', 0.05);
-    setupInputControls('task-quantity-input', 10);
-    getEl('create-task-form').onsubmit = (e) => { e.preventDefault(); goBack(); };
+    // Рендеринг профиля (почти без изменений)
+    const renderProfile = () => {
+        const container = getEl('profile-menu-container');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div>
+                        <p class="profile-name">${currentUserData.name}</p>
+                        <p class="profile-rating"><i class="fas fa-star"></i> Рейтинг: 4.8</p>
+                    </div>
+                </div>
+                <ul class="profile-info-list">
+                    <li><span>ID пользователя:</span><span>${currentUserData.id}</span></li>
+                    <li><span>Пол:</span><span>${currentUserData.gender === 'M' ? 'Мужской' : 'Женский'}</span></li>
+                    <li><span>Возраст:</span><span>${currentUserData.age}</span></li>
+                    <li><span>Страна:</span><span>${currentUserData.country}</span></li>
+                    <li><span>Выполнено заданий:</span><span>${currentUserData.tasks_completed}</span></li>
+                </ul>
+                <div id="terms-link" class="profile-link">
+                    Пользовательское соглашение
+                </div>
+                ${currentUserData.isTermsAccepted ? '' : `<button id="accept-terms-btn" class="btn-primary" style="margin-top: 15px;">Принять условия</button>`}
+            </div>
+            
+            <div class="profile-card">
+                <p class="profile-name">Для Создателей Заданий</p>
+                <div id="admin-bot-link" class="profile-link">
+                    Добавить админ-бота для проверки
+                </div>
+            </div>
+        `;
+        
+        // Обработчик для ссылки на условия
+        getEl('terms-link').onclick = () => showModal('terms-modal');
+        getEl('admin-bot-link').onclick = () => showModal('admin-bot-modal');
+        
+        // Обработчик для кнопки принятия условий
+        const btnAccept = getEl('accept-terms-btn');
+        if (btnAccept) {
+            btnAccept.onclick = () => {
+                // Имитация отправки данных (в реале - API-вызов к боту)
+                if (tg && tg.sendData) {
+                    tg.sendData('accept_agreement'); 
+                    if (tg && tg.showAlert) tg.showAlert('Условия приняты. Бот подтвердит запись в БД.');
+                } else {
+                    currentUserData.isTermsAccepted = true;
+                    if (tg && tg.showAlert) tg.showAlert('Спасибо! Вы приняли пользовательское соглашение. (Отладка)');
+                }
+                renderProfile();
+            };
+        }
+    };
 
-    // Старт
+    // === Фильтр заданий ===
+const filterBtn = getEl('tasks-filter-btn');
+const filterModal = getEl('tasks-filter-modal');
+
+if (filterBtn && filterModal) {
+    const sortSelect = getEl('tasks-sort-select');
+    const typeSelect = getEl('tasks-type-select');
+    const applyBtn = getEl('tasks-filter-apply');
+    const resetBtn = getEl('tasks-filter-reset');
+
+    // Открыть модалку
+    filterBtn.addEventListener('click', () => {
+        filterModal.style.display = 'flex';
+    });
+
+    // Закрытие по клику по фону
+    filterModal.addEventListener('click', (e) => {
+        if (e.target === filterModal) {
+            filterModal.style.display = 'none';
+        }
+    });
+
+    // Применить
+    if (applyBtn) {
+        applyBtn.addEventListener('click', () => {
+            currentPriceSort = sortSelect ? sortSelect.value : 'none';
+            currentTypeFilter = typeSelect ? typeSelect.value : 'all';
+            filterModal.style.display = 'none';
+            renderWorkerTasks();
+        });
+    }
+
+    // Сбросить
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            currentPriceSort = 'none';
+            currentTypeFilter = 'all';
+
+            if (sortSelect) sortSelect.value = 'none';
+            if (typeSelect) typeSelect.value = 'all';
+
+            filterModal.style.display = 'none';
+            renderWorkerTasks();
+        });
+    }
+}
+
+
+    // === УПРАВЛЕНИЕ МОДАЛЬНЫМИ ОКНАМИ ===
+    const showModal = (modalId) => {
+        const modal = getEl(modalId);
+        if (modal) modal.style.display = 'flex';
+    };
+
+    const hideModal = (modalId) => {
+        const modal = getEl(modalId);
+        if (modal) modal.style.display = 'none';
+    };
+    
+    // --- Обработчики модальных окон (Полный набор) ---
+    const btnTermsClose = getEl('modal-close-terms');
+    if (btnTermsClose) {
+        btnTermsClose.onclick = () => hideModal('terms-modal');
+    }
+    const btnRatingClose = getEl('modal-close-rating');
+    if (btnRatingClose) {
+        btnRatingClose.onclick = () => hideModal('rating-modal');
+    }
+    
+    const btnAdminClose = getEl('modal-close-admin-bot');
+    if (btnAdminClose) {
+        btnAdminClose.onclick = () => hideModal('admin-bot-modal');
+    }
+
+    const btnAdminCopy = getEl('modal-copy-botname');
+    if (btnAdminCopy) {
+        btnAdminCopy.onclick = () => {
+            const el = document.createElement('textarea');
+            el.value = BOT_USERNAME;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+            if (tg && tg.showAlert) tg.showAlert(`Имя бота ${BOT_USERNAME} скопировано.`);
+        };
+    }
+    
+    // === ЛОГИКА ФОРМЫ СОЗДАНИЯ ЗАДАНИЯ ===
+    
+    // Request 10: Логика кнопок увеличения/уменьшения
+    const setupInputControls = (id, step, min, max) => {
+        const input = getEl(id);
+        const parent = input.closest('.input-with-controls');
+        if (!parent) return;
+
+        const decreaseBtn = parent.querySelector('.decrease-cost') || parent.querySelector('.decrease-quantity');
+        const increaseBtn = parent.querySelector('.increase-cost') || parent.querySelector('.increase-quantity');
+
+        const updateValue = (delta) => {
+            let currentValue = parseFloat(input.value) || 0;
+            let newValue = currentValue + delta;
+            
+            // Округляем до двух знаков после запятой для стоимости
+            if (id === 'task-cost-input') {
+                newValue = Math.round(newValue * 100) / 100;
+            } else {
+                 // Для количества - целое число
+                 newValue = Math.round(newValue);
+            }
+            
+            newValue = Math.max(min, Math.min(max, newValue));
+            
+            input.value = newValue.toFixed(id === 'task-cost-input' ? 2 : 0);
+            updateTotalCost();
+        };
+
+        if (decreaseBtn) decreaseBtn.onclick = () => updateValue(-step);
+        if (increaseBtn) increaseBtn.onclick = () => updateValue(step);
+    };
+
+    // Расчет итоговой стоимости
+    const updateTotalCost = () => {
+        const costInput = getEl('task-cost-input');
+        const quantityInput = getEl('task-quantity-input');
+        const totalDisplay = getEl('total-cost-display');
+        
+        if (costInput && quantityInput && totalDisplay) {
+            const cost = parseFloat(costInput.value) || 0;
+            const quantity = parseInt(quantityInput.value) || 0;
+            const commissionRate = 0.15; // Пример: 15% комиссия
+            
+            const total = cost * quantity;
+            const totalWithCommission = total * (1 + commissionRate);
+            
+            // Заменяем ₽ на звезду
+            totalDisplay.innerHTML = `${totalWithCommission.toFixed(2)} ${CURRENCY_STAR}`;
+        }
+    };
+    
+    // Request 9: ЛОГИКА КАСТОМНОГО СКРОЛЛА ВОЗРАСТА
+    let activeAgeInput = null; // Хранит активный инпут ('min' или 'max')
+    const agePickerModal = getEl('age-picker-modal');
+    const ageWheel = getEl('age-picker-wheel');
+    const agePickerDoneBtn = getEl('age-picker-done');
+    const agePickerTitle = getEl('age-picker-title');
+    
+    // Заполняем скролл цифрами
+    const MIN_AGE = 18;
+    const MAX_AGE = 99;
+    for (let i = MIN_AGE; i <= MAX_AGE; i++) {
+        const item = document.createElement('div');
+        item.className = 'age-picker-item';
+        item.textContent = i;
+        item.setAttribute('data-age', i);
+        ageWheel.appendChild(item);
+    }
+
+    // Функция для центрирования элемента в скролле
+    const centerAgeItem = (age) => {
+        const itemHeight = 30;
+        const index = age - MIN_AGE;
+        ageWheel.scrollTo({
+            top: index * itemHeight,
+            behavior: 'smooth'
+        });
+        updateAgeSelection();
+    };
+    
+    // Обновление выделенного элемента при скролле
+    const updateAgeSelection = () => {
+        const itemHeight = 30;
+        // Текущий индекс в центре колеса
+        const centerIndex = Math.round(ageWheel.scrollTop / itemHeight);
+        const selectedAge = centerIndex + MIN_AGE;
+        
+        // Снимаем выделение со всех
+        ageWheel.querySelectorAll('.age-picker-item').forEach(item => item.classList.remove('selected'));
+        
+        // Выделяем центральный
+        const selectedItem = ageWheel.querySelector(`.age-picker-item[data-age="${selectedAge}"]`);
+        if (selectedItem) selectedItem.classList.add('selected');
+        
+        return selectedAge;
+    };
+
+    // Обработчик события скролла
+    ageWheel.onscroll = () => {
+        // Делаем небольшой таймаут, чтобы обновить после остановки скролла
+        clearTimeout(ageWheel.scrollTimeout);
+        ageWheel.scrollTimeout = setTimeout(() => {
+            const selectedAge = updateAgeSelection();
+            // Дополнительно привязываем к центру после остановки скролла
+            centerAgeItem(selectedAge); 
+        }, 150); 
+    };
+    
+    // Открытие скролла
+    document.querySelectorAll('.age-input').forEach(input => {
+        input.onclick = () => {
+            activeAgeInput = input;
+            const currentAge = parseInt(input.value) || MIN_AGE;
+            const target = input.getAttribute('data-target');
+            
+            agePickerTitle.textContent = target === 'min' ? 'Выберите минимальный возраст' : 'Выберите максимальный возраст';
+            
+            showModal('age-picker-modal');
+            
+            // Убедимся, что modal-backdrop не мешает (используем класс .age-picker-container)
+            // Добавляем класс visible для CSS-анимации
+            agePickerModal.classList.add('visible');
+            
+            // Устанавливаем колесо на текущее значение
+            setTimeout(() => centerAgeItem(currentAge), 0);
+        };
+    });
+    
+    // Закрытие и сохранение значения
+    agePickerDoneBtn.onclick = () => {
+        const selectedAge = updateAgeSelection();
+        if (activeAgeInput) {
+            activeAgeInput.value = selectedAge;
+        }
+        
+        // Проверка корректности min/max
+        const minAgeInput = getEl('task-age-min-input');
+        const maxAgeInput = getEl('task-age-max-input');
+        
+        if (minAgeInput && maxAgeInput) {
+            const minVal = parseInt(minAgeInput.value);
+            const maxVal = parseInt(maxAgeInput.value);
+            
+            if (minVal > maxVal) {
+                // Если мин > макс, меняем их местами
+                if (activeAgeInput.getAttribute('data-target') === 'min') {
+                    maxAgeInput.value = minVal;
+                } else {
+                    minAgeInput.value = maxVal;
+                }
+            }
+        }
+        
+        agePickerModal.classList.remove('visible');
+        // hideModal('age-picker-modal'); // В данном случае, modal-backdrop не используется, скрываем через класс
+    };
+
+    // --- ЛОГИКА СВАЙПА ДЛЯ НАЗАД (Request 13) ---
+    const mainContent = document.querySelector('.main-content');
+    let startX = 0;
+    let isSwiping = false;
+
+    mainContent.addEventListener('touchstart', (e) => {
+        if (screenHistory.length > 1) { // Свайп работает только на внутренних экранах
+            startX = e.touches[0].clientX;
+            isSwiping = true;
+        }
+    });
+
+    mainContent.addEventListener('touchmove', (e) => {
+        if (!isSwiping) return;
+
+        const currentX = e.touches[0].clientX;
+        const diffX = currentX - startX;
+        
+        // Предотвращаем стандартный скролл, если движение достаточно горизонтальное и вправо
+        if (diffX > 20 && Math.abs(e.touches[0].clientY - e.touches[0].clientY) < 50) {
+            e.preventDefault(); 
+        }
+        
+    }, { passive: false }); // { passive: false } для возможности preventDefault
+
+    mainContent.addEventListener('touchend', (e) => {
+        if (!isSwiping) return;
+        isSwiping = false;
+
+        // Определяем конечную точку
+        const endX = e.changedTouches[0].clientX;
+        const diffX = endX - startX;
+        
+        // Минимальное расстояние свайпа для "Назад" (например, 100px)
+        const swipeThreshold = 100;
+
+        if (diffX > swipeThreshold) {
+            // Свайп слева направо - выполняем действие "Назад"
+            goBack();
+        }
+    });
+
+    // --- Запуск ---
+    // Инициализация формы создания задания (Request 10)
+    setupInputControls('task-cost-input', 0.05, 0.10, 100.00);
+    setupInputControls('task-quantity-input', 10, 10, 10000);
+    updateTotalCost(); // Первичный расчет
+    getEl('task-cost-input').oninput = updateTotalCost;
+    getEl('task-quantity-input').oninput = updateTotalCost;
+    
+    getEl('create-task-form').onsubmit = (e) => {
+        e.preventDefault();
+        if (tg && tg.showAlert) tg.showAlert('Задание отправлено на модерацию!');
+        goBack(); // Возвращаемся к списку заданий
+    };
+
+
+    // Начинаем с экрана заданий
     renderWorkerTasks();
     renderBalanceMenu();
     renderProfile();

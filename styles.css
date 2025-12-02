@@ -2,174 +2,816 @@
 
 :root {
     /* Цвета */
-    --bg-color: #0f1113;
-    --text-color: #f5f5f7;
-    --hint-color: #a0a4aa;
-    --link-color: #64b5f6;
-    --card-bg: #181b20;
-    --secondary-bg-color: #21252b;
-    --border-subtle: #262a31;
-    --border-creator-task: #ffb74d;
-    --accent-color: #ffd54f;
-    --success-color: #66bb6a;
-    --danger-color: #ff4d5a;
-    --active-tab-bg: #2a2e34;
+    --bg-color: #0f1113; /* Глубокий темный фон */
+    --text-color: #f5f5f7; /* Основной светлый текст */
+    --hint-color: #a0a4aa; /* Вспомогательный серый текст */
+    --link-color: #64b5f6; /* Яркий акцент для ссылок */
+
+    --card-bg: #181b20; /* Фон для карточек */
+    --secondary-bg-color: #21252b; /* Фон для кнопок, модалок */
+    --border-subtle: #262a31; /* Тонкая граница */
+    --border-creator-task: #ffb74d; /* Оранжевый/Янтарный для заданий создателя */
+
+    --accent-color: #ffd54f; /* Звезды / Основной акцент */
+    --success-color: #66bb6a; /* Зеленый для успеха/активности */
+    --danger-color: #ff4d5a; /* Красный для опасности/отмены */
+    --active-tab-bg: #2a2e34; /* Светлее, чем secondary-bg-color для активной вкладки */
+
+    /* Пастельные/приглушенные фоны для типов задач */
+    --subscribe-bg: #182620; /* Темно-зеленый */
+    --subscribe-border: #274334;
+    --subscribe-text: #a5d6a7;
+
+    --comment-bg: #231b2a; /* Темно-фиолетовый */
+    --comment-border: #3d2b52;
+    --comment-text: #b39ddb;
+
+    --view-bg: #272018; /* Темно-оранжевый */
+    --view-border: #4d3d27;
+    --view-text: #ffcc80;
     
-    /* Цвета типов */
-    --subscribe-bg: #182620; --subscribe-border: #274334; --subscribe-text: #a5d6a7;
-    --comment-bg: #231b2a; --comment-border: #3d2b52; --comment-text: #b39ddb;
-    --view-bg: #272018; --view-border: #4d3d27; --view-text: #ffcc80;
-    --other-bg: #1c222a; --other-border: #313e4f; --other-text: #90caf9;
+    --other-bg: #1c222a; /* Темно-синий/Серый */
+    --other-border: #313e4f;
+    --other-text: #90caf9;
 }
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); overflow: hidden; }
+/* Общие стили и сброс */
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    padding: 0;
+    /* Request 8 & 11: Запрет на скролл/зум (уже в <meta> viewport) */
+    overflow: hidden; 
+}
 
 /* Контейнеры */
-.app-root { display: flex; flex-direction: column; height: 100vh; max-height: 100vh; width: 100vw; }
-.main-content { flex-grow: 1; overflow-y: auto; padding: 0 0 75px 0; -webkit-overflow-scrolling: touch; }
-.screen-container { padding: 20px 16px; display: none; height: 100%; overflow-y: auto; }
-.screen-container.active { display: block; }
+.app-root {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-height: 100vh; /* Ограничиваем высоту */
+    width: 100vw;
+    position: relative;
+}
+
+.main-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 0 0 70px 0; /* Отступ снизу для таб-бара */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain; /* Помогает в модальных окнах */
+}
+
+.screen-container {
+    padding: 20px 16px;
+    display: none;
+    height: 100%;
+    /* Request 8: Добавляем overflow, чтобы контент модалок/форм скроллился */
+    overflow-y: auto;
+}
+
+.screen-container.active {
+    display: block;
+}
 
 /* Заголовки */
-h1 { font-size: 24px; font-weight: 700; margin: 0 0 20px 0; }
-h2 { font-size: 18px; font-weight: 600; margin: 0 0 15px 0; }
+h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0 0 20px 0;
+}
 
-/* Кнопки и формы */
-.btn-primary, .btn-secondary, .task-create-btn { padding: 12px 20px; font-size: 15px; font-weight: 600; border-radius: 10px; cursor: pointer; border: none; transition: 0.2s; width: 100%; }
-.btn-primary { background-color: var(--accent-color); color: var(--bg-color); }
-.btn-secondary { background-color: var(--secondary-bg-color); color: var(--text-color); border: 1px solid var(--border-subtle); }
-.btn-primary:active, .btn-secondary:active { transform: scale(0.98); opacity: 0.9; }
+h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0 0 15px 0;
+}
 
-.form-group { margin-bottom: 15px; }
-label { display: block; font-size: 13px; color: var(--hint-color); margin-bottom: 5px; font-weight: 500; }
-.input-field, .textarea-field, .select-field { width: 100%; padding: 10px 12px; border: 1px solid var(--border-subtle); border-radius: 8px; background-color: var(--card-bg); color: var(--text-color); font-size: 15px; appearance: none; }
-.textarea-field { min-height: 100px; resize: vertical; }
-.input-field:focus { border-color: var(--link-color); outline: none; }
+/* --- КНОПКИ и ФОРМЫ (с анимацией) --- */
+.btn-primary, .btn-secondary, .task-create-btn {
+    padding: 12px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s, transform 0.1s;
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
 
-.input-with-controls { display: flex; align-items: center; background-color: var(--card-bg); border: 1px solid var(--border-subtle); border-radius: 8px; overflow: hidden; }
-.input-with-controls input { flex-grow: 1; border: none; background: none; padding: 10px 12px; text-align: right; }
-.input-control-btn { width: 40px; height: 40px; background-color: var(--secondary-bg-color); color: var(--accent-color); border: none; font-size: 18px; cursor: pointer; }
-.form-row-2col { display: flex; gap: 15px; }
-.form-row-2col > .form-group { flex: 1; min-width: 0; }
+.btn-primary {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+}
 
-/* Хедер */
-.global-header-bar { padding: 10px 16px; background-color: var(--bg-color); border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
-.header-title { font-size: 18px; font-weight: 700; }
-.header-button { background: none; border: none; color: var(--text-color); font-size: 18px; padding: 5px; }
+.btn-secondary {
+    background-color: var(--secondary-bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-subtle);
+}
 
-/* --- НИЖНИЙ БАР (Улучшенный) --- */
+/* Request 1: Анимация нажатия для кнопок */
+.btn-primary:active, .btn-secondary:active, .task-create-btn:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+}
+
+/* Формы */
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    font-size: 13px;
+    color: var(--hint-color);
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.input-field, .textarea-field, .select-field {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    font-size: 15px;
+    appearance: none; /* Убирает стандартные стили для select */
+}
+
+.textarea-field {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.input-field:focus, .textarea-field:focus, .select-field:focus {
+    border-color: var(--link-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(100, 181, 246, 0.2);
+}
+
+/* Специальные стили для инпутов с кнопками (Request 10) */
+.input-with-controls {
+    display: flex;
+    align-items: center;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.input-with-controls input {
+    flex-grow: 1;
+    border: none;
+    background: none;
+    padding: 10px 12px;
+    text-align: right;
+}
+
+.input-control-btn {
+    width: 40px;
+    height: 40px;
+    background-color: var(--secondary-bg-color);
+    color: var(--accent-color);
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.input-control-btn:active {
+    background-color: var(--border-subtle);
+    transform: scale(0.95);
+}
+
+.input-control-btn:first-child {
+    border-right: 1px solid var(--border-subtle);
+}
+
+.input-control-btn:last-child {
+    border-left: 1px solid var(--border-subtle);
+}
+
+/* Request 10: Стоимость и Количество на одной строке */
+.form-row-2col {
+    display: flex;
+    gap: 15px;
+}
+.form-row-2col > .form-group {
+    flex: 1;
+    min-width: 0;
+}
+
+
+/* --- ГЛОБАЛЬНЫЙ ХЕДЕР --- */
+.global-header-bar {
+    padding: 10px 16px;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.header-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.header-button {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 5px;
+    transition: transform 0.1s;
+}
+.header-button:active {
+    transform: scale(0.9);
+}
+
+/* --- НИЖНИЙ НАВИГАЦИОННЫЙ БАР --- */
 .bottom-nav-bar {
-    position: fixed; bottom: 0; left: 0; width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
     background-color: var(--secondary-bg-color);
     border-top: 1px solid var(--border-subtle);
-    display: flex; justify-content: space-around;
-    padding: 0; /* Убрали паддинг, высота кнопок задается внутри */
+    display: flex;
+    justify-content: space-around;
+    padding: 6px 4px 4px 4px;
     z-index: 20;
-    height: 65px; /* Фиксированная высота */
 }
 
+/* Кнопки-вкладки стали визуально толще и «кнопочнее» */
 .tab-item {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    flex: 1; color: var(--hint-color); cursor: pointer;
-    transition: all 0.2s ease;
-    border-radius: 0; /* Убрали радиус, чтобы заливка была полной */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 0;
+    flex: 1;
+    color: var(--hint-color);
+    cursor: pointer;
+    transition: color 0.2s, background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+    border-radius: 12px 12px 0 0;
+    margin: 0 4px;
+    min-height: 60px; /* чуть выше */
 }
 
+.tab-item:active {
+    transform: scale(0.95);
+}
+
+/* Активная вкладка — светлее и чуть приподнята */
 .tab-item.active {
-    background-color: #2a2e34; /* Светлее фон */
+    background-color: #353b44; /* светлее, чем var(--secondary-bg-color) */
     color: var(--text-color);
-    box-shadow: inset 0 -3px 0 var(--accent-color); /* Полоска снизу */
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .tab-icon {
-    font-size: 20px;
-    margin-bottom: 6px;
-    transition: transform 0.2s;
+    font-size: 18px;
+    margin-bottom: 2px;
+}
+
+/* Делаем иконки чуть объемнее и цветными при выборе */
+.tab-item .tab-icon {
+    transition: transform 0.2s, color 0.2s, text-shadow 0.2s;
+    color: var(--hint-color);
 }
 
 .tab-item.active .tab-icon {
-    /* Объемный и цветной эффект */
     color: var(--accent-color);
-    transform: translateY(-2px) scale(1.1); 
-    text-shadow: 0 4px 8px rgba(255, 213, 79, 0.2);
+    transform: translateY(-1px);
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
 }
 
-.tab-info-block { display: flex; align-items: center; justify-content: center; position: relative; }
-.tab-info-text { font-size: 11px; font-weight: 600; margin-bottom: 2px; } /* Подняли текст выше */
-.tab-number { font-size: 12px; font-weight: 700; margin-left: 5px; color: var(--success-color); }
+.tab-info-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-/* --- ЗАДАНИЯ (Обновленный стиль карточки) --- */
-.create-task-btn-container { padding-bottom: 20px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 15px; }
-.task-list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-top: 10px; }
-.task-list-title { font-size: 16px; font-weight: 600; color: var(--hint-color); }
-.filter-button { background: none; border: none; color: var(--link-color); font-size: 14px; cursor: pointer; }
+/* Подпись вкладки чуть выше и читаемее */
+.tab-info-text {
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1;
+    margin-top: -1px; /* приподнимаем визуально чуть выше */
+}
+
+.tab-number {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    margin-left: 4px;
+    color: var(--accent-color);
+}
+
+.tab-item.active .tab-number {
+    color: var(--success-color);
+}
+
+
+/* === 3. ЗАДАНИЯ (Worker Tasks) === */
+
+.create-task-btn-container {
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 15px;
+}
+
+.task-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-top: 10px; /* Отступ после кнопки Создать задание */
+}
+
+.task-list-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--hint-color);
+}
+
+.filter-button {
+    background: none;
+    border: none;
+    color: var(--link-color);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+}
 
 .task-item {
-    display: flex; justify-content: space-between; align-items: center;
+    /* Request 15: Уменьшение толщины карточки */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     background-color: var(--card-bg);
-    padding: 14px 15px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    border: 1px solid transparent;
+    padding: 12px 15px; /* Уменьшаем отступы */
+    border-radius: 10px;
+    margin-bottom: 8px; /* Уменьшаем отступ между карточками */
+    border: 1px solid var(--card-bg); /* Изначально прозрачная граница */
     cursor: pointer;
     transition: background-color 0.2s;
-    position: relative;
 }
-.task-item:active { transform: scale(0.99); }
-.task-item.creator-task { border-color: var(--border-creator-task); box-shadow: 0 0 10px rgba(255, 183, 77, 0.1); }
 
-.task-info { flex-grow: 1; margin-right: 15px; overflow: hidden; }
+.task-item:hover {
+    background-color: #21252b;
+}
+
+.task-item:active {
+    /* Request 1: Анимация нажатия */
+    transform: scale(0.99);
+}
+
+/* Request 14: Рамка для заданий создателя (на модерации) */
+.task-item.creator-task {
+    border-color: var(--border-creator-task);
+    box-shadow: 0 0 10px rgba(255, 183, 77, 0.1);
+}
+
+.task-info {
+    flex-grow: 1;
+    margin-right: 15px;
+    overflow: hidden;
+}
 
 .task-title {
-    font-size: 15px; font-weight: 600; color: var(--text-color);
-    margin: 0 0 6px 0;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 14px; /* Уменьшаем размер шрифта */
+    font-weight: 600;
+    margin: 0 0 4px 0; /* Уменьшаем отступ */
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-/* Новое место для "Осталось" */
-.task-remaining-line {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--link-color);
-    margin-bottom: 4px;
-}
-.task-remaining-line.low-stock { color: var(--danger-color); } /* Если мало, станет красным */
-
-.task-meta { font-size: 11px; color: var(--hint-color); display: flex; align-items: center; }
-.task-meta-badge {
-    display: inline-block; padding: 2px 6px; border-radius: 4px; 
-    margin-right: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase;
-    background-color: rgba(255,255,255,0.05);
+.task-meta {
+    font-size: 11px;
+    color: var(--hint-color);
 }
 
 .task-action {
-    display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
-    flex-shrink: 0; min-width: 70px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    text-align: right;
 }
+
+/* Request 16: Убираем нижнюю стоимость, переносим информацию о количестве */
 .task-cost-badge {
-    font-weight: 700; font-size: 16px; color: var(--success-color);
+    font-weight: 700;
+    font-size: 14px; /* Увеличиваем размер для акцента */
+    color: var(--success-color);
+    margin-bottom: 4px; /* Отступ от количества */
+}
+
+.task-available-info {
+    font-size: 11px;
+    color: var(--link-color);
+    font-weight: 500;
+    margin-bottom: 3px; /* чтобы мета-текст не прилипал */
+}
+
+.task-available-info i {
+    display: none; /* иконки больше не нужны, чтобы не отвлекать */
 }
 
 
-/* --- МОДАЛКИ (Без изменений стилей, только общие) --- */
-.modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 30; padding: 20px; }
-.modal-content { background-color: var(--secondary-bg-color); padding: 25px; border-radius: 12px; width: 100%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
-.modal-content h3 { color: var(--accent-color); margin-top: 0; }
-.age-picker-container { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--secondary-bg-color); z-index: 40; transform: translateY(100%); transition: 0.3s; padding: 15px 0; border-top: 1px solid var(--border-subtle); }
-.age-picker-container.visible { transform: translateY(0); }
-.age-picker-header { display: flex; justify-content: space-between; padding: 0 15px 10px; }
-.age-picker-done-btn { background: none; border: none; color: var(--link-color); font-weight: 600; font-size: 15px; }
-.age-picker-wheel-wrapper { height: 150px; position: relative; overflow: hidden; display: flex; justify-content: center; }
-.age-picker-selection-indicator { position: absolute; top: 50%; width: 100%; height: 30px; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); transform: translateY(-50%); pointer-events: none; }
-.age-picker-wheel { overflow-y: scroll; height: 100%; width: 60px; padding: 60px 0; text-align: center; scroll-snap-type: y mandatory; scrollbar-width: none; }
-.age-picker-item { height: 30px; line-height: 30px; color: var(--hint-color); scroll-snap-align: center; font-size: 18px; }
-.age-picker-item.selected { color: var(--text-color); font-weight: 700; transform: scale(1.1); }
 
-/* Остальное */
-.task-details-title-display { font-size: 18px; margin-bottom: 15px; }
-.task-detail-list li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-subtle); }
-.profile-card { background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-.avatar { width: 50px; height: 50px; background: var(--secondary-bg-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--accent-color); font-size: 24px; margin-right: 15px; }
-.profile-header { display: flex; align-items: center; margin-bottom: 15px; }
-.balance-item { display: flex; justify-content: space-between; padding: 10px 0; }
+/* --- Детали Задания (Task Details) --- */
+.task-details-card {
+    padding: 20px 16px;
+}
+
+.task-details-content {
+    padding-bottom: 20px;
+}
+
+.task-details-title-display {
+    font-size: 18px;
+    margin: 0 0 15px 0;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.task-type-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    white-space: nowrap;
+    margin-bottom: 10px;
+    display: inline-block;
+}
+
+.task-detail-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.task-detail-section:first-child {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.task-detail-section h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--hint-color);
+    margin: 0 0 8px 0;
+}
+
+.task-detail-section p, .task-detail-section ul {
+    font-size: 14px;
+    color: var(--text-color);
+    line-height: 1.5;
+    margin: 0 0 10px 0;
+}
+
+.task-detail-list {
+    list-style: none;
+    padding: 0;
+}
+
+.task-detail-list li {
+    background-color: var(--secondary-bg-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+.task-detail-list li span:first-child {
+    color: var(--hint-color);
+}
+
+.task-detail-list li span:last-child {
+    font-weight: 600;
+}
+
+
+/* === 4. СОЗДАТЬ ЗАДАНИЕ (Create Task) === */
+.task-create-btn {
+    background-color: var(--link-color);
+    color: var(--text-color);
+}
+
+/* === 5. ПРОФИЛЬ (Profile Menu) === */
+.profile-card {
+    background-color: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.avatar {
+    width: 50px;
+    height: 50px;
+    background-color: var(--secondary-bg-color);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    color: var(--accent-color);
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.profile-name {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-color);
+}
+
+.profile-rating {
+    font-size: 14px;
+    color: var(--hint-color);
+    display: flex;
+    align-items: center;
+}
+
+.profile-rating i {
+    color: var(--accent-color);
+    margin-right: 5px;
+}
+
+.profile-info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.profile-info-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-top: 1px dashed var(--border-subtle);
+    font-size: 14px;
+}
+.profile-info-list li:first-child {
+    border-top: none;
+}
+
+.profile-info-list span:first-child {
+    color: var(--hint-color);
+}
+
+.profile-info-list span:last-child {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.profile-link {
+    display: block;
+    color: var(--link-color);
+    text-align: center;
+    padding: 10px 0;
+    font-size: 14px;
+    cursor: pointer;
+    border-top: 1px solid var(--border-subtle);
+    margin-top: 10px;
+}
+
+/* === 6. БАЛАНС (Balance Menu) === */
+.balance-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.balance-item-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.balance-item-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.balance-item.total .balance-item-value {
+    font-size: 20px;
+    color: var(--success-color);
+}
+
+.balance-item.pending .balance-item-value {
+    color: var(--link-color);
+}
+
+
+/* --- МОДАЛЬНЫЕ ОКНА --- */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+    padding: 20px;
+    /* Request 8: Убедимся, что фон не скроллится вместе с модалкой */
+    overflow: auto; 
+    -webkit-overflow-scrolling: touch;
+}
+
+.modal-content {
+    background-color: var(--secondary-bg-color);
+    padding: 25px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    max-height: 90vh; /* Ограничиваем высоту для мобильных */
+    overflow-y: auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    transform: scale(1);
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.modal-content p, .modal-content ul, .modal-content ol {
+    font-size: 13px;
+    color: var(--text-color);
+    line-height: 1.5;
+    margin-bottom: 15px;
+}
+
+.modal-content ul, .modal-content ol {
+    margin-left: 20px;
+    padding-left: 0;
+}
+
+.modal-content li {
+    margin-bottom: 5px;
+    color: var(--hint-color);
+}
+.modal-content li strong {
+    color: var(--text-color);
+}
+
+.modal-content button {
+    margin-top: 10px;
+}
+
+.modal-content .muted-text {
+    color: var(--hint-color);
+    font-style: italic;
+}
+
+
+/* --- КОНТЕЙНЕР ДЛЯ ВЫБОРА ВОЗРАСТА (Request 9) --- */
+.age-picker-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: var(--secondary-bg-color);
+    border-top: 1px solid var(--border-subtle);
+    z-index: 40;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-out;
+    padding: 15px 0;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.3);
+}
+
+.age-picker-container.visible {
+    transform: translateY(0);
+}
+
+.age-picker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 15px 10px 15px;
+}
+
+.age-picker-header h3 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 16px;
+}
+
+.age-picker-done-btn {
+    background: none;
+    border: none;
+    color: var(--link-color);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.age-picker-wheel-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 150px;
+    position: relative;
+    overflow: hidden;
+}
+
+.age-picker-selection-indicator {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    height: 30px;
+    border-top: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.age-picker-wheel {
+    overflow-y: scroll;
+    height: 100%;
+    width: 60px; /* Request 9: Ограничиваем ширину */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+    text-align: center;
+    padding-top: 60px; /* Отступ для центрирования первого элемента */
+    padding-bottom: 60px; /* Отступ для центрирования последнего элемента */
+    scroll-snap-type: y mandatory; /* Привязка к элементам */
+}
+
+.age-picker-wheel::-webkit-scrollbar {
+    display: none;
+}
+
+.age-picker-item {
+    height: 30px; /* Высота элемента должна совпадать с индикатором */
+    line-height: 30px;
+    font-size: 18px;
+    color: var(--hint-color);
+    transition: color 0.2s, transform 0.2s;
+    scroll-snap-align: center;
+    font-weight: 500;
+}
+
+.age-picker-item.selected {
+    color: var(--text-color);
+    font-weight: 700;
+    transform: scale(1.1);
+}
+
+.filter-row {
+    margin-bottom: 15px;
+}
+
+.filter-row label {
+    font-size: 13px;
+    color: var(--hint-color);
+    margin-bottom: 5px;
+    display: block;
+}
