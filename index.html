@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8" />
     <title>Profit Pro Hub</title>
-    <!-- Request 8 & 11: Убеждаемся, что зум отключен и масштаб статичен -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0" />
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMDJc5fR5Wc4W3uI5h/4Q/2h+L72V6W7tT6J5l1S4uU5h/4Q/2h+L72V6W7tT6J5l1S4uU5D5d5a5G5u5" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body id="app-body">
     <div id="app-root" class="app-root">
 
-        <!-- Глобальный хедер (Используется для деталей заданий и создания) -->
+        <!-- Глобальный хедер -->
         <header id="global-header-bar" class="global-header-bar" style="display: none;">
             <!-- Сюда будет рендериться заголовок и кнопка "Назад" -->
         </header>
@@ -24,23 +23,19 @@
 
             <!-- 1. Экран исполнителя: Задания -->
             <div id="worker-tasks-container" class="screen-container active">
-                <!-- Request 4: Кнопка "Создать задание" остается наверху -->
                 <div class="create-task-btn-container">
                     <button id="create-task-btn" class="btn-primary task-create-btn">
                         Создать задание
                     </button>
                 </div>
 
-                <!-- Заголовок и фильтр -->
                 <div class="task-list-header">
-                    <!-- Request 4: "Задания" переносится сюда -->
                     <h2 class="task-list-title">Все задания на рынке</h2>
                     <button id="tasks-filter-btn" class="filter-button">
                         <i class="fas fa-filter"></i> Фильтр
                     </button>
                 </div>
 
-                <!-- Список заданий -->
                 <div id="task-list">
                     <!-- Здесь будут карточки заданий -->
                 </div>
@@ -48,9 +43,7 @@
 
             <!-- 2. Экран исполнителя: Детали задания -->
             <div id="task-details-container" class="screen-container" style="display: none;">
-                <div id="task-details-content">
-                    <!-- Здесь будут детали задания и кнопка "Выполнить" -->
-                </div>
+                <div id="task-details-content"></div>
             </div>
             
             <!-- 3. Экран исполнителя: Создание задания (форма) -->
@@ -75,7 +68,7 @@
 
                     <div class="form-group">
                         <label for="task-description-input">Подробное описание и ссылка</label>
-                        <textarea id="task-description-input" class="textarea-field" required placeholder="Опишите, что нужно сделать. Обязательно добавьте ссылку на объект (канал/чат/пост)."></textarea>
+                        <textarea id="task-description-input" class="textarea-field" required placeholder="Опишите, что нужно сделать. Обязательно добавьте ссылку на объект."></textarea>
                     </div>
                     
                     <h3>Целевая аудитория (опционально)</h3>
@@ -93,7 +86,6 @@
                         <input type="text" id="task-country-input" class="input-field" placeholder="Например: Россия, Казахстан"/>
                     </div>
                     
-                    <!-- Request 9: Добавляем поле для выбора возраста, которое будет открывать скролл -->
                     <div class="form-group">
                         <label for="task-age-min-input">Минимальный возраст (от)</label>
                         <input type="number" id="task-age-min-input" class="input-field age-input" readonly required value="18" min="18" max="99" data-target="min"/>
@@ -105,10 +97,9 @@
 
                     <h3>Бюджет</h3>
                     
-                    <!-- Request 10: Стоимость и Количество на одной строке -->
                     <div class="form-row-2col">
                         <div class="form-group">
-                            <label for="task-cost-input">Стоимость за 1 выполнение (₽)</label>
+                            <label for="task-cost-input">Стоимость (₽)</label>
                             <div class="input-with-controls">
                                 <button type="button" class="input-control-btn decrease-cost">-</button>
                                 <input type="number" id="task-cost-input" class="input-field" required value="0.25" min="0.10" max="100.00" step="0.05" style="text-align: center;"/>
@@ -117,7 +108,7 @@
                         </div>
     
                         <div class="form-group">
-                            <label for="task-quantity-input">Количество выполнений</label>
+                            <label for="task-quantity-input">Количество</label>
                             <div class="input-with-controls">
                                 <button type="button" class="input-control-btn decrease-quantity">-</button>
                                 <input type="number" id="task-quantity-input" class="input-field" required value="100" min="10" max="10000" step="10" style="text-align: center;"/>
@@ -127,7 +118,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Итоговая стоимость (с учетом комиссии):</label>
+                        <label>Итоговая стоимость:</label>
                         <p id="total-cost-display" style="font-size: 16px; font-weight: 700; color: var(--accent-color);">0.00 ₽</p>
                     </div>
 
@@ -140,31 +131,22 @@
             <!-- 4. Экран баланса -->
             <div id="balance-menu-container" class="screen-container" style="display: none;">
                 <h2>Баланс</h2>
-                <div id="balance-info-list">
-                    <!-- Здесь будет информация о балансе -->
-                </div>
-                <button class="btn-primary" style="margin-top: 20px;">
-                    Вывести средства
-                </button>
-                <button class="btn-secondary" style="margin-top: 10px;">
-                    Пополнить баланс
-                </button>
+                <div id="balance-info-list"></div>
+                <button class="btn-primary" style="margin-top: 20px;">Вывести средства</button>
+                <button class="btn-secondary" style="margin-top: 10px;">Пополнить баланс</button>
             </div>
 
             <!-- 5. Экран профиля -->
-            <div id="profile-menu-container" class="screen-container" style="display: none;">
-                <!-- Здесь будет профиль -->
-            </div>
+            <div id="profile-menu-container" class="screen-container" style="display: none;"></div>
 
         </main>
 
         <!-- Нижний навигационный бар -->
         <footer class="bottom-nav-bar">
-            <!-- Request 2 & 3: Обновленная структура табов -->
+            <!-- Исправление: убрали цифру количества заданий -->
             <div class="tab-item active" data-screen="worker-tasks-container">
                 <div class="tab-info-block">
                     <i class="fas fa-list-check tab-icon"></i>
-                    <span id="tasks-count-display" class="tab-number">10</span>
                 </div>
                 <span class="tab-info-text">Задания</span>
             </div>
@@ -178,16 +160,45 @@
             <div class="tab-item" data-screen="profile-menu-container">
                 <div class="tab-info-block">
                     <i class="fas fa-user tab-icon"></i>
-                    <!-- Здесь нет числа, оставим пустым или можно добавить рейтинг -->
                 </div>
                 <span class="tab-info-text">Профиль</span>
             </div>
         </footer>
     </div>
     
-    <!-- МОДАЛЬНЫЕ ОКНА ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ В СТРУКТУРЕ -->
+    <!-- МОДАЛЬНЫЕ ОКНА -->
     
-    <!-- Модальное окно для выбора возраста (Request 9) -->
+    <!-- Новое окно фильтра -->
+    <div id="filter-modal" class="modal-backdrop" style="display:none;">
+        <div class="modal-content">
+            <h3>Фильтр и Сортировка</h3>
+            
+            <div class="form-group">
+                <label>Сортировать по:</label>
+                <select id="filter-sort-select" class="select-field">
+                    <option value="default">По умолчанию</option>
+                    <option value="price_desc">Цена: По убыванию</option>
+                    <option value="price_asc">Цена: По возрастанию</option>
+                    <option value="count_asc">Мало заданий (горят)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Тип заданий:</label>
+                <select id="filter-type-select" class="select-field">
+                    <option value="all">Все типы</option>
+                    <option value="subscribe">Подписки</option>
+                    <option value="comment">Комментарии</option>
+                    <option value="view">Просмотры</option>
+                </select>
+            </div>
+
+            <button id="apply-filter-btn" class="btn-primary">Применить</button>
+            <button id="modal-close-filter" class="btn-secondary" style="margin-top: 10px;">Отмена</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно для выбора возраста -->
     <div id="age-picker-modal" class="age-picker-container">
         <div class="age-picker-header">
             <h3 id="age-picker-title">Выберите возраст</h3>
@@ -195,9 +206,7 @@
         </div>
         <div class="age-picker-wheel-wrapper">
             <div class="age-picker-selection-indicator"></div>
-            <div class="age-picker-wheel" id="age-picker-wheel">
-                <!-- Элементы возраста будут сгенерированы в JS -->
-            </div>
+            <div class="age-picker-wheel" id="age-picker-wheel"></div>
         </div>
     </div>
 
@@ -205,17 +214,12 @@
     <div id="rating-modal" class="modal-backdrop" style="display:none;">
         <div class="modal-content">
             <h3>Что такое Рейтинг?</h3>
-            <p>
-                Рейтинг — это ключевой показатель надежности исполнителя.
-            </p>
+            <p>Рейтинг — это ключевой показатель надежности исполнителя.</p>
             <ul>
                 <li>За успешно выполненные задания рейтинг растёт.</li>
                 <li>За частые нарушения и отмены — снижается.</li>
-                <li>Исполнители с высоким рейтингом получают доступ к более дорогим заданиям.</li>
             </ul>
-            <button id="modal-close-rating" class="btn-primary">
-                Понятно
-            </button>
+            <button id="modal-close-rating" class="btn-primary">Понятно</button>
         </div>
     </div>
 
@@ -223,22 +227,18 @@
     <div id="admin-bot-modal" class="modal-backdrop" style="display:none;">
         <div class="modal-content">
             <h3>Админ-бот для проверки</h3>
-            <p class="muted-text">
-                Чтобы задания на подписку, просмотр и комментарии корректно проверялись,
-                добавьте админ-бота в свой канал или чат.
-            </p>
-            <ol>
-                <li>Откройте ваш канал или чат в Telegram.</li>
-                <li>Перейдите в «Управление» → «Администраторы».</li>
-                <li>Добавьте бота по имени, которое указано в интерфейсе.</li>
-                <li>Выдайте ему права на просмотр участников и сообщений.</li>
-            </ol>
-            <button id="modal-copy-botname" class="btn-primary">
-                Скопировать имя бота
-            </button>
-            <button id="modal-close-admin-bot" class="btn-secondary">
-                Закрыть
-            </button>
+            <p class="muted-text">Чтобы задания проверялись автоматически, добавьте бота.</p>
+            <button id="modal-copy-botname" class="btn-primary">Скопировать имя бота</button>
+            <button id="modal-close-admin-bot" class="btn-secondary">Закрыть</button>
+        </div>
+    </div>
+    
+    <!-- Модальное окно Соглашения -->
+    <div id="terms-modal" class="modal-backdrop" style="display:none;">
+        <div class="modal-content">
+            <h3>Пользовательское соглашение</h3>
+            <p>Здесь текст соглашения...</p>
+            <button id="modal-close-terms" class="btn-primary">Закрыть</button>
         </div>
     </div>
 
