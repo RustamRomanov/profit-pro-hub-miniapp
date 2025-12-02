@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // === Вспомогательные ===
     const BOT_USERNAME = '@lookgroup_bot'; 
     const getEl = (id) => document.getElementById(id);
+    
+    // Новая константа для символа валюты (Telegram Star)
+    const CURRENCY_STAR = '<i class="fas fa-star" style="color: var(--accent-color);"></i>';
 
     const user = tg && tg.initDataUnsafe && tg.initDataUnsafe.user
         ? tg.initDataUnsafe.user
@@ -107,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const activeTab = document.querySelector(`.tab-item[data-screen="${screenId}"]`);
         if (activeTab) {
-            activeTab.classList.add('active');
+            tab.classList.add('active');
         }
     };
     
@@ -191,7 +194,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 
                 <div class="task-action">
-                    <span class="task-cost-badge">${task.cost.toFixed(2)} ₽</span>
+                    <!-- Заменяем ₽ на звезду -->
+                    <span class="task-cost-badge">${CURRENCY_STAR} ${task.cost.toFixed(2)}</span>
                     <!-- Request 16: Вместо нижней стоимости - доступное количество -->
                     <span class="task-available-info">${availableInfo}</span>
                 </div>
@@ -272,7 +276,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="task-detail-section">
                     <h3>Условия и статистика</h3>
                     <ul class="task-detail-list">
-                        <li><span>Цена за выполнение:</span><span>${task.cost.toFixed(2)} ₽</span></li>
+                        <!-- Заменяем ₽ на звезду -->
+                        <li><span>Цена за выполнение:</span><span>${CURRENCY_STAR} ${task.cost.toFixed(2)}</span></li>
                         <li><span>Доступно/Всего:</span><span>${task.available}/${task.total}</span></li>
                         <li><span>Пол:</span><span>Не важно</span></li>
                         <li><span>Возраст:</span><span>18-99</span></li>
@@ -282,7 +287,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             <div class="task-details-card" style="padding-top: 0; padding-bottom: 0;">
                 <button id="execute-task-btn" class="btn-primary" ${isExecutable ? '' : 'disabled'} style="margin-top: 20px;">
-                    ${isExecutable ? `Начать выполнение (${task.cost.toFixed(2)} ₽)` : 'Это Ваше задание'}
+                    <!-- Заменяем ₽ на звезду -->
+                    ${isExecutable ? `Начать выполнение (${task.cost.toFixed(2)} ${CURRENCY_STAR})` : 'Это Ваше задание'}
                 </button>
             </div>
         `;
@@ -305,22 +311,26 @@ document.addEventListener('DOMContentLoaded', () => {
         balanceList.innerHTML = `
             <div class="balance-item total">
                 <span class="balance-item-title">Общий баланс</span>
-                <span class="balance-item-value">${currentUserData.balance.toFixed(2)} ₽</span>
+                <!-- Заменяем ₽ на звезду -->
+                <span class="balance-item-value">${CURRENCY_STAR} ${currentUserData.balance.toFixed(2)}</span>
             </div>
             <hr style="border: none; border-top: 1px solid var(--border-subtle); margin: 10px 0;">
             <div class="balance-item pending">
                 <span class="balance-item-title">Ожидание поступлений (в эскроу)</span>
-                <span class="balance-item-value">${currentUserData.pending_balance.toFixed(2)} ₽</span>
+                <!-- Заменяем ₽ на звезду -->
+                <span class="balance-item-value">${CURRENCY_STAR} ${currentUserData.pending_balance.toFixed(2)}</span>
             </div>
             <div class="balance-item">
                 <span class="balance-item-title">Готово к выводу</span>
-                <span class="balance-item-value">${currentUserData.withdrawable_balance.toFixed(2)} ₽</span>
+                <!-- Заменяем ₽ на звезду -->
+                <span class="balance-item-value">${CURRENCY_STAR} ${currentUserData.withdrawable_balance.toFixed(2)}</span>
             </div>
         `;
         
         // Request 3: Обновление счетчика баланса в табе
         const balanceValueDisplay = getEl('balance-value-display');
-        if (balanceValueDisplay) balanceValueDisplay.textContent = currentUserData.balance.toFixed(2);
+        // Используем innerHTML для вставки иконки звезды рядом с числом
+        if (balanceValueDisplay) balanceValueDisplay.innerHTML = `${currentUserData.balance.toFixed(2)} ${CURRENCY_STAR}`;
     };
 
     // Рендеринг профиля (почти без изменений)
@@ -469,7 +479,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const total = cost * quantity;
             const totalWithCommission = total * (1 + commissionRate);
             
-            totalDisplay.textContent = `${totalWithCommission.toFixed(2)} ₽`;
+            // Заменяем ₽ на звезду
+            totalDisplay.innerHTML = `${totalWithCommission.toFixed(2)} ${CURRENCY_STAR}`;
         }
     };
     
